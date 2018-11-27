@@ -23,7 +23,7 @@ router.post('/register', async function (req, res) {
 async function getUserTrackerIdIfPerm(user, viewUser){
     let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [viewUser])).id;
 
-    let viewPerms = await db.oneOrNone('SELECT * FROM TrackerUserViewPermissions WHERE user_id=$1 AND tracked_id=$2 AND approved=true', [user, viewUserId]);
+    let viewPerms = await db.oneOrNone('SELECT * FROM TrackerUserViewPermissions WHERE user_id=$1 AND tracked_tracker_id=$2 AND approved=true', [user, viewUserId]);
     if (!viewPerms && viewUser !== user)
         return false;
     return viewUserId;
@@ -46,7 +46,7 @@ router.get('/checkon', async function (req, res) {
 
 router.get('/tracking', async function (req, res) {
 
-    let tracking = await db.manyOrNone('SELECT * FROM TrackerUserViewPermissions WHERE user_id=$1', [req.user.id]);
+    let tracking = await db.manyOrNone('SELECT * FROM TrackerUserViewPermissions WHERE tracker_user_id=$1', [req.user.id]);
 
     return res.status(200).json(tracking);
 });
@@ -56,8 +56,7 @@ router.post('/tracking', async function (req, res) {
     try {
         let viewUser = req.body.username;
 
-        let viewUserId = (await db.one("SELECT user_id FROM TrackerUser WHERE LOWER(username)=LOWER($1)", [viewUser])).user_id;
-        console.log(req.user.id, viewUserId);
+        let viewUserId = (await db.one("SELECT tracker_id FROM TrackerUser WHERE LOWER(username)=LOWER($1)", [viewUser])).tracker_id;
 
         let tracking = await db.one('INSERT INTO TrackerObserver (tracker_id, tracked_id) VALUES ($1,$2) RETURNING tracker_id, tracked_id', [req.user.id, viewUserId]);
 
@@ -80,9 +79,9 @@ router.put('/trackedby', async function (req, res) {
     let viewUser = req.body.tracker_id;
     let approval = req.body.approval;
 
-    let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [viewUser])).id;
+    let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [req.user.id])).id;
 
-    let tracking = await db.one('UPDATE TrackObserver SET approved=$3 WHERE tracker_id=$1 AND tracked_id=$2 RETURNING tracker_id, tracked_id, approved', [req.user.id, viewUserId, approval]);
+    let tracking = await db.one('UPDATE TrackerObserver SET approved=$3 WHERE tracker_id=$1 AND tracked_id=$2 RETURNING id, tracker_id, tracked_id, approved', [viewUserId, viewUser, approval]);
 
     return res.status(200).json(tracking);
 });
@@ -285,7 +284,7 @@ function get_time_as_millis(time) {
  (SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerCheckin.time, TrackerCheckin.plus_time, TrackerCheckin.minus_time, TrackerCheckin.on_days FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerCheckin on TrackerInfo.id=TrackerCheckin.tracked_id);
 
  CREATE VIEW TrackerUserViewPermissions AS
- (SELECT users.id as user_id, TrackerUser.username, TrackerObserver.tracked_id as tracked_id, TrackerUser.user_id as tracked_user_id, approved FROM users join TrackerObserver on users.id=TrackerObserver.tracker_id join TrackerUser on TrackerObserver.tracked_id=TrackerUser.tracker_id);
+ (SELECT TrackerObserver.id, TrackerUser.user_id as tracked_user_id, TrackerUser.username as tracked_username, TrackerUser.tracker_id as tracked_tracker_id, users.id as tracker_user_id, users.username as tracker_username, approved FROM users join TrackerObserver on users.id=TrackerObserver.tracker_id join TrackerUser on TrackerObserver.tracked_id=TrackerUser.tracker_id);
 
  DROP TABLE IF EXISTS TrackerInfo CASCADE;
  DROP TABLE IF EXISTS TrackerObserver CASCADE;
