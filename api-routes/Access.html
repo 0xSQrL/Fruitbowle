@@ -1,0 +1,144 @@
+<html>
+<head><title>Fruitbowle Access</title>
+    <meta charset="UTF-8">
+    <script src="/public/javascripts/jquery-3.3.1.min.js"></script>
+</head>
+
+<script>
+	var token = "";
+	var currentEndpoint = null;
+
+	function applyToken() {
+		document.getElementById("tolken").value = token;
+	}
+
+	function endpoint(url, method, defaultObject){
+		this.url = url;
+		this.json = JSON.stringify(defaultObject).replace(/,/g, ',\n').replace(/{/g, '{\n').replace(/}/g,'\n}');
+		this.method = method;
+	}
+
+	var endpoints = [
+		new endpoint("/api/users/login", "POST", {username: "", password: ""}),
+		new endpoint("/api/users/register", "POST", {username: "", email: "@gmail.com", password: ""}),
+        new endpoint("/api/users/check?user=", "POST", {}),
+        new endpoint("/api/tracker/register", "POST", {pin: "0000"}),
+        new endpoint("/api/tracker/checkin", "POST", {latitude: -100.00001, longitude: -100.00001, status: 0, battery_percent: 0.75}),
+        new endpoint("/api/tracker/checkon?user=", "GET", {}),
+        new endpoint("/api/tracker/checkonhistory?user=", "GET", {}),
+        new endpoint("/api/tracker/schedule?user=", "GET", {}),
+        new endpoint("/api/tracker/schedule", "POST", {time: "12:00:00+00", plus_time: "00:30:00+00", minus_time: "00:30:00+00", on_days: [false,false,false,false,false,false,false]}),
+        new endpoint("/api/tracker/schedule", "PUT", {schedule_id: 0, time: "12:00:00+00", plus_time: "00:30:00+00", minus_time: "00:30:00+00", on_days: [false,false,false,false,false,false,false]}),
+        new endpoint("/api/tracker/schedule", "DELETE", {schedule_id: 0}),
+        new endpoint("/api/tracker/tracking", "GET", {}),
+        new endpoint("/api/tracker/tracking", "POST", {username: ""}),
+        new endpoint("/api/tracker/trackedby", "GET", {}),
+        new endpoint("/api/tracker/trackedby", "PUT", {tracker_id: 0, approval: true}),
+
+    ];
+
+	function switchJSONFeild(endpoint){
+		if(currentEndpoint)
+			currentEndpoint.json = document.getElementById("json").value;
+		document.getElementById("json").value = endpoints[endpoint].json;
+		document.getElementById("url").value = endpoints[endpoint].url;
+		document.getElementById("method").value = endpoints[endpoint].method;
+		currentEndpoint = endpoints[endpoint];
+		return false;
+	}
+
+	function formatJsonString(json) {
+		let retStr = "";
+		let indent = 0;
+		for (let i = 0; i < json.length; i++) {
+			if (/[\]}]/.test(json[i])) {
+				indent--;
+				retStr += '<br>';
+
+				for (let j = 0; j < indent; j++)
+					retStr += "&nbsp&nbsp&nbsp&nbsp";
+			}
+			retStr += json[i];
+			if (/[\[{]/.test(json[i]))
+				indent++;
+
+			if (/[\[{,]/.test(json[i])) {
+
+				retStr += '<br>';
+				for (let j = 0; j < indent; j++)
+					retStr += "&nbsp&nbsp&nbsp&nbsp";
+			}
+
+		}
+		return retStr;
+	}
+
+	function postJson() {
+		let startTime = Date.now();
+		let url = "http://localhost:3000" + document.getElementById("url").value;
+		let json = document.getElementById("json").value;
+		document.getElementById("returnVal").innerHTML = "";
+		document.getElementById("serverTime").innerHTML = new Date().toUTCString();
+
+		document.getElementById("applyToken").disabled = true;
+		$.ajax({
+			url: url,
+			type: document.getElementById("method").value,
+			data: json,
+			beforeSend: function (xhrObj) {
+				xhrObj.setRequestHeader("authorization", "Bearer " + document.getElementById("tolken").value);
+			},
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: function (data) {
+				document.getElementById("returnVal").innerHTML = formatJsonString(JSON.stringify(data));
+				if (data.token) {
+
+					document.getElementById("applyToken").disabled = false;
+					token = data.token;
+				}
+			},
+			error: function (data) {
+				document.getElementById("returnVal").innerHTML = `<span style="color:red;">` + formatJsonString(data.responseText) + `</span>`;
+			}
+		});
+		document.getElementById("requestSpeed").innerHTML = `${((Date.now() - startTime) / 1000)}s`;
+	}
+</script>
+<table style="width: 100%; height: 70%">
+    <tr>
+        <td style="width: 70%;">
+            <input type="text" name="url" id="url" width="40%">
+            <select id="method">
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+            </select><br>
+            Token:<br>
+            <input type="text" name="tolken" id="tolken" style="width:100%;"><br>
+            JSON:<br>
+            <textarea name="json" id="json" style="width:100%; height:80%;"></textarea><br>
+            <input type="button" onclick="postJson()" value="Post"><br>
+        </td>
+        <td style="width: 30%; height: 100%;">
+            <div id="endpoints">
+
+            </div>
+            <script>
+				for(let i = 0; i < endpoints.length; i++){
+
+					document.getElementById("endpoints").innerHTML += `<a href="${endpoints[i].url}" id="endpoint${i}" onclick="return switchJSONFeild(${i})"> ${endpoints[i].url} ${endpoints[i].method}</a><br>`;
+				}
+            </script>
+        </td>
+    </tr>
+</table>
+Response:
+<button id="applyToken" onclick="applyToken()" disabled="true">Apply Token</button><span id="requestSpeed"></span>&nbsp&nbsp&nbsp&nbsp<span id="serverTime"></span>
+<div style="border-color: black; border-style: solid; max-width: 90%; word-wrap: break-word; font-family: monospace"
+     id="returnVal">
+
+</div>
+
+</html>

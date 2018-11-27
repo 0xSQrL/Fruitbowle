@@ -1,0 +1,109 @@
+body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 70em;
+	background-color: #f0e68c;
+}
+
+.headbar {
+    font-family: sans-serif;
+    padding: 0.1em 0.2em 0.1em 0.2em;
+    background: #750000 url("/public/images/plaid.png") repeat;
+    position: relative;
+}
+
+.logo_text {
+    color: #DDD;
+    text-shadow: 1px 1px #000;
+    font-size: 2em;
+    vertical-align: center;
+    bottom: 0.5em;
+    position: absolute;
+}
+
+img.top_icon{
+    vertical-align: middle;
+    height: 4em;
+}
+
+.error{
+    color: #FF0000;
+}
+
+.user_management {
+    bottom: 1em;
+    right: 1em;
+    background: #BC0000;
+    position: absolute;
+    display: inline-block;
+    font-size: 1em;
+    padding: 0.5em;
+    color: #DDD;
+    border: solid #720000;
+}
+
+.content {
+    margin: 2em 5% 0 5%;
+    height: 100%;
+    font-size: 1em;
+}
+
+.divider {
+    height: 0.2em;
+    background: #440000;
+    background: linear-gradient(#750000, #000000);
+}
+
+a.login {
+    color: #000000;
+    text-decoration: underline;
+}
+
+a.login:link {
+    color: #BA6E37;
+}
+
+a.login:visited {
+    color: #F49049;
+}
+
+a.login:hover {
+    color: #F26507;
+}
+
+a.ignorant {
+    color: unset;
+    text-decoration: none;
+}
+
+a.ignorant:link {
+    color: unset;
+    text-decoration: none;
+}
+
+a.ignorant:visited {
+    color: unset;
+    text-decoration: none;
+}
+
+a.ignorant:hover {
+    color: unset;
+    text-decoration: none;
+}
+
+
+.required {
+    color: #FF0000;
+}
+
+.column {
+    float: left;
+    border: ridge;
+    width: 20%;
+    margin: 1em;
+}
+
+.row {
+    clear: both;
+}
