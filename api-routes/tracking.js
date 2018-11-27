@@ -21,12 +21,16 @@ router.post('/register', async function (req, res) {
 });
 
 async function getUserTrackerIdIfPerm(user, viewUser){
-    let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [viewUser])).id;
+    try {
+        let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [viewUser])).id;
 
-    let viewPerms = await db.oneOrNone('SELECT * FROM TrackerUserViewPermissions WHERE user_id=$1 AND tracked_tracker_id=$2 AND approved=true', [user, viewUserId]);
-    if (!viewPerms && viewUser !== user)
+        let viewPerms = await db.oneOrNone('SELECT * FROM TrackerUserViewPermissions WHERE tracker_user_id=$1 AND tracked_tracker_id=$2 AND approved=true', [user, viewUserId]);
+        if (!viewPerms && viewUser !== user)
+            return false;
+        return viewUserId;
+    }catch (e) {
         return false;
-    return viewUserId;
+    }
 }
 
 
@@ -36,7 +40,10 @@ router.get('/checkon', async function (req, res) {
     let viewUserId = await getUserTrackerIdIfPerm(req.user.id, viewUser);
 
     if (!viewUserId)
-        return res.status(401).json({error: "no view permissions"});
+        if (viewUser === req.user.id)
+            return res.status(401).json({error: "you do not have a tracker account"});
+        else
+            return res.status(401).json({error: "no view permissions"});
 
     let status = await get_user_status(viewUserId);
     return res.status(200).json({
@@ -93,7 +100,7 @@ router.get('/checkonhistory', async function(req, res){
     if (!viewUserId)
         return res.status(401).json({error: "no view permissions"});
 
-    if(await get_user_status(viewUserId) <= 0){
+    if((await get_user_status(viewUserId)).status <= 0){
         return res.json([]);
     }
 
