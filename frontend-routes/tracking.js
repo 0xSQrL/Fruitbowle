@@ -1,6 +1,7 @@
 const html_builder = require.main.require('../html-builder');
 const web_components = require('./web_components');
 const Elements = html_builder.Elements;
+const tracker_utils = require.main.require('./../utils/tracker');
 
 const express = require('express');
 const router = express.Router();
@@ -8,17 +9,20 @@ const router = express.Router();
 
 router.get('/', (req, res) => {
 
-    let page = web_components.standardPage(req.user,
-        new Elements.Form(
-            "Username", Elements.SimpleBreak,
-            new Elements.Form.TextField("username"), Elements.SimpleBreak,
-            "Password", Elements.SimpleBreak,
-            new Elements.Form.PasswordField("password"),
+    let page = web_components.standardPage(req.user);
+    let tracker_id;
+    if(tracker_id = tracker_utils.getUserTrackerId(req.user.id)){
+        page.add_contents(new Elements.Heading(2, "Welcome Back!"), `Your current status ${tracker_utils.getUserTrackerId(req.user.id)}`);
+    }else{
+        page.add_contents(new Elements.Form(
+            "4-Digit PIN Number", Elements.SimpleBreak,
+            new Elements.Form.PasswordField("pin"),
             Elements.SimpleBreak,
             Elements.SimpleBreak,
-            new Elements.Form.SubmitButton("Login").set_attr("onClick", "return send_login_request()")
-        ).set_attr("id", "login")
-    );
+            new Elements.Form.SubmitButton("Create Tracker Account").set_attr("onClick", "return send_create_tracker_request()")
+        ).set_attr("id", "login"));
+    }
+
     page.set_title("Fruit Login");
     page.add_javascripts("/public/javascripts/tracker.js");
     res.send(page.to_html());

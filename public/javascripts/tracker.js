@@ -10,3 +10,14 @@ function send_create_tracker_request() {
     });
     return false;
 }
+
+function autoLocation(){
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position){
+            document.getElementById('latitude').value = position.coords.latitude;
+            document.getElementById('longitude').value = position.coords.longitude;
+        });
+    }else{
+
+    }
+}
