@@ -23,10 +23,13 @@ function get_form_data(form_name){
     let data = $(`#${form_name}`).serializeArray();
     let retData = {};
     data.forEach(function(elem){
-        console.log(elem);
         retData[elem.name] = elem.value;
     });
     return retData;
+}
+
+function force_only_number(form){
+	setTimeout(function(){form.value = form.value.replace(/[^0-9]/g, '');}, 1);
 }
 
 function get_object(){
@@ -42,4 +45,9 @@ function get_object(){
         url = url.substring(end + 1);
     }
     return get_obj;
+}
+
+function removeElementById(id){
+	let element = document.getElementById(id);
+	element.parentElement.removeChild(element);
 }

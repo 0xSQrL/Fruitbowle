@@ -53,7 +53,7 @@ router.get('/post-reg', (req, res) => {
     let page = web_components.standardPage(req.user,
         new Elements.Divider(
             new Elements.Heading(2, "Thank you for registering!"), Elements.SimpleBreak,
-            new Elements.Span(`An email has been sent to <i>${email}</i> from <i>noreply.fruitbowle@gmail.com</i>. 
+            new Elements.Span(`An email has been sent to <i>${escape(decodeURI(email))}</i> from <i>${process.env.EMAIL_ADDRESS}</i>. 
                 To complete your registration and validate your account, please go to your email and click the provided link.`)
         )
     );

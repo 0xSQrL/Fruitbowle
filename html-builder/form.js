@@ -26,11 +26,23 @@ module.exports.Form.PasswordField = function (name, default_text) {
 module.exports.Form.PasswordField.prototype = Object.create(basics.BasicContent.prototype);
 module.exports.Form.PasswordField.prototype.constructor = module.exports.Form.PasswordField;
 
+
+
+module.exports.Form.NumberField = function (name, default_text) {
+	basics.BasicContent.call(this, `input`);
+	this.set_attr("type", "number");
+	if (default_text)
+		this.set_attr("value", default_text);
+	this.set_attr("name", name);
+};
+module.exports.Form.NumberField.prototype = Object.create(basics.BasicContent.prototype);
+module.exports.Form.NumberField.prototype.constructor = module.exports.Form.NumberField;
+
 module.exports.Form.SubmitButton = function (text) {
-    basics.BasicContent.call(this, `input`);
-    this.set_attr("type", "submit");
-    if (text)
-        this.set_attr("value", text);
+	basics.BasicContent.call(this, `input`);
+	this.set_attr("type", "submit");
+	if (text)
+		this.set_attr("value", text);
 
 };
 module.exports.Form.SubmitButton.prototype = Object.create(basics.BasicContent.prototype);

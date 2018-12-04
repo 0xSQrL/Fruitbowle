@@ -183,6 +183,15 @@ router.get('/schedule', async function (req, res) {
 
 /**
 
+ DROP TABLE IF EXISTS TrackerInfo CASCADE;
+ DROP TABLE IF EXISTS TrackerObserver CASCADE;
+ DROP TABLE IF EXISTS TrackerLog CASCADE;
+ DROP TABLE IF EXISTS TrackerCheckin CASCADE;
+ DROP VIEW  IF EXISTS TrackerUser CASCADE;
+ DROP VIEW  IF EXISTS TrackerUserLog CASCADE;
+ DROP VIEW  IF EXISTS TrackerUserSchedule CASCADE;
+ DROP VIEW  IF EXISTS TrackerUserViewPermissions CASCADE;
+
  CREATE TABLE TrackerInfo(
  id      SERIAL PRIMARY KEY,
  user_id  INTEGER references users(id) UNIQUE NOT NULL,
@@ -228,14 +237,6 @@ router.get('/schedule', async function (req, res) {
  CREATE VIEW TrackerUserViewPermissions AS
  (SELECT TrackerObserver.id, TrackerUser.user_id as tracked_user_id, TrackerUser.username as tracked_username, TrackerUser.tracker_id as tracked_tracker_id, users.id as tracker_user_id, users.username as tracker_username, approved FROM users join TrackerObserver on users.id=TrackerObserver.tracker_id join TrackerUser on TrackerObserver.tracked_id=TrackerUser.tracker_id);
 
- DROP TABLE IF EXISTS TrackerInfo CASCADE;
- DROP TABLE IF EXISTS TrackerObserver CASCADE;
- DROP TABLE IF EXISTS TrackerLog CASCADE;
- DROP TABLE IF EXISTS TrackerCheckin CASCADE;
- DROP VIEW  IF EXISTS TrackerUser CASCADE;
- DROP VIEW  IF EXISTS TrackerUserLog CASCADE;
- DROP VIEW  IF EXISTS TrackerUserSchedule CASCADE;
- DROP VIEW  IF EXISTS TrackerUserViewPermissions CASCADE;
  */
 
 module.exports = router;

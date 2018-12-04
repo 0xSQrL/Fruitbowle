@@ -1,4 +1,6 @@
 const html_builder = require.main.require('../html-builder');
+const escape = require('escape-html');
+module.exports.escape = escape;
 const Elements = html_builder.Elements;
 
 module.exports.topbar = function (user) {
@@ -9,7 +11,7 @@ module.exports.topbar = function (user) {
     let user_management = new Elements.Divider();
     if(user){
         user_management.add_contents(
-            `Welcome ${user.username}! `,
+            `Welcome ${escape(user.username)}! `,
             new Elements.Link('', "Log out").set_attr("onClick", "clearToken()").set_attr("class", "login")
         );
     }else{
@@ -35,11 +37,16 @@ module.exports.standardPage = function(user, ...content){
     page.add_javascripts("/public/javascripts/jquery-3.3.1.min.js");
     page.add_javascripts("/public/javascripts/basic_utils.js");
 
+	let mainContent = new Elements.Divider(
+		...content
+	).set_attr("class", "content");
     page.add_contents(headbar);
-    page.add_contents(
-        new Elements.Divider(
-            ...content
-        ).set_attr("class", "content")
-    );
+    page.add_contents(mainContent);
+    page.add_contents = function (...content) {
+		content.forEach(function (cont) {
+			mainContent.add_contents(cont);
+		});
+		return this;
+	};
     return page;
 };

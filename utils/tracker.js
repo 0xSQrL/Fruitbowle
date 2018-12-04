@@ -2,7 +2,10 @@ const db = require.main.require('./../database');
 
 
 async function getUserTrackerId(user) {
-    return (await db.oneOrNone("SELECT id FROM TrackerInfo WHERE user_id=$1", [user])).id;
+	const tracker = await db.oneOrNone("SELECT id FROM TrackerInfo WHERE user_id=$1", [user]);
+	if(tracker)
+    	return tracker.id;
+	return null;
 }
 
 async function getUserTrackerIdIfPerm (user, viewUser){

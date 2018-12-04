@@ -53,7 +53,7 @@ function send_registration_request() {
                     if(data.success){
                         //Success
 
-                        document.location = `/login/post-reg?email=${req.email}`;
+                        document.location = `/login/post-reg?email=${encodeURI(req.email)}`;
                     }else
                     {
                         switch (data.reason){
