@@ -12,7 +12,7 @@ module.exports.topbar = function (user) {
     if(user){
         user_management.add_contents(
             `Welcome ${escape(user.username)}! `,
-            new Elements.Link('', "Log out").set_attr("onClick", "clearToken()").set_attr("class", "login")
+            new Elements.Link('', "Log out").set_attr("onClick", "return clearToken()").set_attr("class", "login")
         );
     }else{
         user_management.add_contents(

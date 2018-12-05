@@ -1,11 +1,29 @@
 const db = require.main.require('./../database');
 
 
+function user_status_to_string(val){
+	switch (val) {
+		case 0: return 'Ok';
+		case 1: return 'Not Checked in';
+		case 2: return 'Nervous';
+		case 3: return 'Danger';
+		default: return 'Undefined';
+	}
+}
+
 async function getUserTrackerId(user) {
 	const tracker = await db.oneOrNone("SELECT id FROM TrackerInfo WHERE user_id=$1", [user]);
 	if(tracker)
     	return tracker.id;
 	return null;
+}
+
+async function get_tracking_requests(user){
+	let requests = await db.manyOrNone('SELECT tracked_username, tracker_username, approved, tracker_user_id FROM TrackerUserViewPermissions WHERE tracked_user_id=$1', [user])
+}
+
+async function get_tracker_requests(user){
+	let requests = await db.manyOrNone('SELECT tracked_username, tracker_username, approved, tracked_user_id FROM TrackerUserViewPermissions WHERE tracker_user_id=$1', [user])
 }
 
 async function getUserTrackerIdIfPerm (user, viewUser){
@@ -77,4 +95,12 @@ function get_time_as_millis(time) {
     return new Date(`Jan 1 1970 ${time} UTC`).getTime();
 }
 
-module.exports = {get_user_status, is_time_pass_schedule, getUserTrackerIdIfPerm, getUserTrackerId};
+module.exports = {
+	get_user_status,
+	is_time_pass_schedule,
+	getUserTrackerIdIfPerm,
+	getUserTrackerId,
+	user_status_to_string,
+	get_tracking_requests,
+	get_tracker_requests
+};

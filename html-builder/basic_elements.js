@@ -1,4 +1,5 @@
 module.exports.SimpleBreak = `<br>`;
+module.exports.SimpleTab = `&nbsp&nbsp&nbsp&nbsp`;
 
 module.exports.BasicContent = function (tag) {
 

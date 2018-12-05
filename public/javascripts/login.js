@@ -3,7 +3,7 @@ function send_login_request() {
     send_api_call("/api/users/login", "POST", form, {
         success: function (data) {
             let future = new Date(Date.now() + 1000 * 60 * 60 * 24);
-            document.cookie=`token=${data.token};expires=${future}`
+            document.cookie=`token=${data.token};expires=${future}`;
             document.location = "/"
         },
         error: function (data) {

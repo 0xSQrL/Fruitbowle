@@ -1,6 +1,7 @@
 
 function clearToken(){
-    document.cookie="token=; expires=01 Jan 1970 00:00:00 UTC;";
+    document.cookie="token=; expires=01 Jan 1970 00:00:00 UTC";
+    return true;
 }
 
 function send_api_call(target, method, json_data, response, token){
@@ -15,7 +16,7 @@ function send_api_call(target, method, json_data, response, token){
     if(token)
         call.beforeSend = function (xhrObj) {
             xhrObj.setRequestHeader("Authorization", `Bearer ${token}`);
-        }
+        };
     $.ajax(call);
 }
 
