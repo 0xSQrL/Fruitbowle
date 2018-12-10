@@ -18,26 +18,48 @@ async function getUserTrackerId(user) {
 	return null;
 }
 
+function locationToDMS(coord){
+	const degree = Math.floor(coord);
+	coord = (coord-degree) * 60;
+	const minutes = Math.floor(coord);
+	coord = (coord-degree) * 600;
+	const seconds = Math.floor(coord) / 10;
+	return `${degree}°${minutes}'${seconds}"`;
+}
+
 async function get_tracking_requests(user){
-	let requests = await db.manyOrNone('SELECT tracked_username, tracker_username, approved, tracker_user_id FROM TrackerUserViewPermissions WHERE tracked_user_id=$1', [user])
+	return (await db.manyOrNone('SELECT tracked_username, tracker_username, approved, tracker_user_id FROM TrackerUserViewPermissions WHERE tracked_user_id=$1', [user]))
 }
 
 async function get_tracker_requests(user){
-	let requests = await db.manyOrNone('SELECT tracked_username, tracker_username, approved, tracked_user_id FROM TrackerUserViewPermissions WHERE tracker_user_id=$1', [user])
+	return (await db.manyOrNone('SELECT tracked_username, tracker_username, approved, tracked_user_id FROM TrackerUserViewPermissions WHERE tracker_user_id=$1', [user]));
 }
 
-async function getUserTrackerIdIfPerm (user, viewUser){
+async function getUserTrackerIfPerm (user, viewUser){
+	const oriUser = viewUser;
     try {
-        let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [viewUser])).id;
-
-        let viewPerms = await db.oneOrNone('SELECT * FROM TrackerUserViewPermissions WHERE tracker_user_id=$1 AND tracked_tracker_id=$2 AND approved=true', [user, viewUserId]);
-        if (!viewPerms && viewUser !== user)
+        viewUser = (await db.one("SELECT tracker_id, username, user_id FROM TrackerUser WHERE user_id=$1", [viewUser]));
+        viewUser.id = viewUser.tracker_id;
+        let viewPerms = await db.oneOrNone('SELECT 1 FROM TrackerUserViewPermissions WHERE tracker_user_id=$1 AND tracked_tracker_id=$2 AND approved=true', [user, viewUser.id]);
+        if (!viewPerms && viewUser.user_id !== user)
             return false;
-        return viewUserId;
+        return viewUser;
     }catch (e) {
-        return false;
+		return (user === oriUser);
     }
-};
+}
+
+async function get_checkin_history(trackedUser){
+	let checkin_history = await db.manyOrNone('SELECT latitude, longitude, battery_percent, status, time_made FROM TrackerLog WHERE tracked_id=$1 ORDER BY time_made DESC LIMIT 10', [trackedUser.id]);
+	return checkin_history ? checkin_history : [];
+}
+
+
+async function get_checkin_schedule(trackedUser){
+	let checkins = await db.manyOrNone('SELECT id, time, plus_time, minus_time, on_days FROM TrackerCheckin WHERE tracked_id=$1 ORDER BY time ASC', [trackedUser.id]);
+	return checkins ? checkins : [];
+}
+
 
 
 
@@ -82,13 +104,25 @@ function is_time_pass_schedule(time, schedule) {
 }
 
 function get_time_relative(time, check_time, prebuffer, postbuffer) {
-    let premillis = check_time.getTime() - get_time_as_millis(prebuffer);
-    let postmillis = check_time.getTime() + get_time_as_millis(postbuffer);
-    if (time.getTime() > postmillis)
-        return 1;
-    if (time.getTime() > premillis)
-        return 0;
-    return -1;
+	let premillis = check_time.getTime() - get_time_as_millis(prebuffer);
+	let postmillis = check_time.getTime() + get_time_as_millis(postbuffer);
+	if (time.getTime() > postmillis)
+		return 1;
+	if (time.getTime() > premillis)
+		return 0;
+	return -1;
+}
+
+
+function get_time_between(check_time, prebuffer, postbuffer) {
+	let premillis = new Date(check_time.getTime() - get_time_as_millis(prebuffer));
+	let postmillis = new Date(check_time.getTime() + get_time_as_millis(postbuffer));
+
+	return `${premillis.getHours()}:${premillis.getMinutes()} - ${postmillis.getHours()}:${postmillis.getMinutes()}`;
+}
+
+function alert_user_trackers(user_id, latitude, longitude){
+
 }
 
 function get_time_as_millis(time) {
@@ -98,9 +132,13 @@ function get_time_as_millis(time) {
 module.exports = {
 	get_user_status,
 	is_time_pass_schedule,
-	getUserTrackerIdIfPerm,
+	get_checkin_history,
+	get_checkin_schedule,
+	get_time_between,
+	getUserTrackerIfPerm,
 	getUserTrackerId,
 	user_status_to_string,
 	get_tracking_requests,
-	get_tracker_requests
+	get_tracker_requests,
+	alert_user_trackers
 };

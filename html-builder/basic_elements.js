@@ -15,6 +15,8 @@ module.exports.BasicContent.prototype.to_html = function(){
     return `<${this.tag}${attrStr}>`;
 };
 module.exports.BasicContent.prototype.set_attr = function (attr, value) {
+	if(!value)
+		value = '';
     this.attributes[attr] = value;
     return this;
 };

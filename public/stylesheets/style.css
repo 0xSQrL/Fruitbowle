@@ -107,3 +107,18 @@ a.ignorant:hover {
 .row {
     clear: both;
 }
+
+
+input[readonly] {
+    background-color: #DDDDDD;
+}
+
+.good{
+    background: #AACCAA;
+}
+.nervous{
+    background: #CCCCAA;
+}
+.emergency{
+    background: #CCAAAA;
+}

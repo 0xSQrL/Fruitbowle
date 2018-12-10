@@ -25,15 +25,15 @@ router.post('/register', async function (req, res) {
 
 router.get('/checkon', async function (req, res) {
     let viewUser = req.query.user ? req.query.user : req.user.id;
-    let viewUserId = await tracker_utils.getUserTrackerIdIfPerm(req.user.id, viewUser);
+    let viewUserTracker = await tracker_utils.getUserTrackerIfPerm(req.user.id, viewUser);
 
-    if (!viewUserId)
+    if (!viewUserTracker)
         if (viewUser === req.user.id)
             return res.status(401).json({error: "you do not have a tracker account"});
         else
             return res.status(401).json({error: "no view permissions"});
 
-    let status = await tracker_utils.get_user_status(viewUserId);
+    let status = await tracker_utils.get_user_status(viewUserTracker.id);
     return res.status(200).json({
         status
     });
@@ -58,6 +58,7 @@ router.post('/tracking', async function (req, res) {
         return res.status(200).json(tracking);
     }catch (e){
         console.log(e);
+		return res.status(500).json({error:'error'});
     }
 });
 
@@ -73,7 +74,6 @@ router.put('/trackedby', async function (req, res) {
 
     let viewUser = req.body.tracker_id;
     let approval = req.body.approval;
-
     let viewUserId = (await db.one("SELECT id FROM TrackerInfo WHERE user_id=$1", [req.user.id])).id;
 
     let tracking = await db.one('UPDATE TrackerObserver SET approved=$3 WHERE tracker_id=$1 AND tracked_id=$2 RETURNING id, tracker_id, tracked_id, approved', [viewUserId, viewUser, approval]);
@@ -83,16 +83,16 @@ router.put('/trackedby', async function (req, res) {
 
 router.get('/checkonhistory', async function(req, res){
     let viewUser = req.query.user ? req.query.user : req.user.id;
-    let viewUserId = await tracker_utils.getUserTrackerIdIfPerm(req.user.id, viewUser);
+    let viewUserTracker = await tracker_utils.getUserTrackerIfPerm(req.user.id, viewUser);
 
-    if (!viewUserId)
+    if (!viewUserTracker)
         return res.status(401).json({error: "no view permissions"});
 
-    if((await tracker_utils.get_user_status(viewUserId)).status <= 0){
+    if((await tracker_utils.get_user_status(viewUserTracker.id)).status <= 0){
         return res.json([]);
     }
 
-    let checkin_history = await db.manyOrNone('SELECT latitude, longitude, battery_percent, status, time_made FROM TrackerLog WHERE tracked_id=$1 ORDER BY time_made DESC LIMIT 10', [viewUserId]);
+    let checkin_history = await db.manyOrNone('SELECT latitude, longitude, battery_percent, status, time_made FROM TrackerLog WHERE tracked_id=$1 ORDER BY time_made DESC LIMIT 10', [viewUserTracker.id]);
 
     return res.json(checkin_history);
 
@@ -113,11 +113,15 @@ router.post('/checkin', async function (req, res) {
         }
     } else {
         status = req.body.status;
+        if(status === 3)
+        	tracker_utils.alert_user_trackers(req.user.id, req.body.latitude, req.body.longitude);
     }
     try {
         let logAddition = await db.one('INSERT INTO TrackerLog (tracked_id, status, latitude, longitude, battery_percent) VALUES ($1, $2, $3, $4, $5) RETURNING status, latitude, longitude, time_made, battery_percent', [userLast.tracker_id, status, req.body.latitude, req.body.longitude, req.body.battery_percent]);
+        logAddition.success = true;
         return res.status(201).json(logAddition);
     } catch (e) {
+    	console.log(e);
         return res.status(200).json({
             success: false
         })
@@ -170,12 +174,12 @@ router.delete('/schedule', async function (req, res) {
 
 router.get('/schedule', async function (req, res) {
     let viewUser = req.query.user ? req.query.user : req.user.id;
-    let viewUserId = await tracker_utils.getUserTrackerIdIfPerm(req.user.id, viewUser);
+    let viewUserTracker = await tracker_utils.getUserTrackerIfPerm(req.user.id, viewUser);
 
-    if (!viewUserId)
+    if (!viewUserTracker)
         return res.status(401).json({error: "no view permissions"});
 
-    let checkins = await db.manyOrNone('SELECT id, time, plus_time, minus_time, on_days FROM TrackerCheckin WHERE tracked_id=$1', [viewUserId]);
+    let checkins = await db.manyOrNone('SELECT id, time, plus_time, minus_time, on_days FROM TrackerCheckin WHERE tracked_id=$1', [viewUserTracker.id]);
     return res.status(200).json(checkins);
 });
 
