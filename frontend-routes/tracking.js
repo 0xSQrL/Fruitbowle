@@ -121,6 +121,8 @@ async function generate_users_checkin_table(page, user, target_user) {
 					obj.set_attr('width','120px');
 			}
 			).set_attr('style', 'border-collapse: collapse; border: 2px solid rgba(0,0,0,0.1);width: 100%'));
+	}else{
+		page.add_contents(Elements.SimpleBreak,Elements.SimpleBreak, "User has not yet created a check-in schedule.");
 	}
 }
 

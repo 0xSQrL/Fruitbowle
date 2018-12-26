@@ -107,6 +107,31 @@ function user_status_to_string(val){
 	}
 }
 
+function loadUserSchedule(intoElement){
+	const element = document.getElementById(intoElement);
+	element.innerHTML = "";
+
+
+    send_api_call("/api/tracker/schedule", "GET", {}, {
+        success: function (data) {
+        	for(let i = 0; i < data.length; i++){
+        		let scheduleElem = data[i];
+        		element.innerHTML += `
+        		<form>
+        		<input name="id" value="${scheduleElem.id}" hidden>
+        		Check in time: <input type="time" name="time"> Minus Buffer: <input type="time" name="minus_time" value="00:30:00"> Plus Buffer: <input type="time" name="plus_time" value="00:30:00"><br>
+        		Days: <input type="checkbox" name="on_days[0]"> Sunday <input type="checkbox" name="on_days[1]"> Monday <input type="checkbox" name="on_days[2]"> Tuesday <input type="checkbox" name="on_days[3]"> Wednesday <input type="checkbox" name="on_days[4]"> Thursday <input type="checkbox" name="on_days[5]"> Friday <input type="checkbox" name="on_days[6]"> Saturday 
+        		<input type="submit" onclick=""
+        		</form>
+
+					`;
+			}
+        },
+        error: function (data) {
+        }
+    });
+}
+
 
 function autoLocation(){
 	const checkstatus = document.getElementById("checkinStatus");

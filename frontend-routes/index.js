@@ -19,7 +19,8 @@ try {
         new Elements.Center(
             new Elements.Heading(2, "Welcome to Fruit Bowl E(ntertainment)"),
             new Elements.Heading(3, "The plaid clad website")
-        )
+        ),
+        new Elements.Link('/tracker', 'Tracker')
     );
     page.set_title("Fruit Bowl Home!");
     res.send(page.to_html());
