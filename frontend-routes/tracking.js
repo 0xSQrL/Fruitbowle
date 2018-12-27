@@ -211,30 +211,47 @@ router.get('/', async function (req, res) {
 
 
 router.get('/user', async function (req, res) {
-	let targetUser = req.query.user;
-	if(!targetUser)
-		targetUser = req.user.id;
-	let page = web_components.standardPage(req.user);
-	let tracker;
-	if (tracker = await tracker_utils.getUserTrackerIfPerm(req.user.id, targetUser)) {
-		page.add_contents(new Elements.Center(new Elements.Heading('2', `Tracking ${web_components.escape(tracker.username)}`)));
-		let user_status = await tracker_utils.get_user_status(tracker.id);
-		page.add_contents(
-			`${web_components.escape(tracker.username)}'s current status: `,
-			new Elements.Span(tracker_utils.user_status_to_string(user_status.status)).set_attr('id', 'userStatus'), Elements.SimpleBreak, Elements.SimpleTab,
-			`as of ${user_status.time}`,
-			Elements.SimpleBreak
-		);
-		page.add_contents(Elements.Break(2));
-		if(user_status.status > 0)
-			await generate_users_histroy_table(page, req.user.id, tracker);
-		await generate_users_checkin_table(page, req.user.id, tracker);
-	}else{
-		page.add_contents(new Elements.Center(new Elements.Heading('2', 'You do not have permission to view this user')))
-	}
-	page.set_title("Fruit Login");
-	page.add_javascripts("/public/javascripts/tracker.js");
-	res.send(page.to_html());
+    let targetUser = req.query.user;
+    if(!targetUser)
+        targetUser = req.user.id;
+    let page = web_components.standardPage(req.user);
+    let tracker;
+    if (tracker = await tracker_utils.getUserTrackerIfPerm(req.user.id, targetUser)) {
+        page.add_contents(new Elements.Center(new Elements.Heading(2, `Tracking ${web_components.escape(tracker.username)}`)));
+        let user_status = await tracker_utils.get_user_status(tracker.id);
+        page.add_contents(
+            `${web_components.escape(tracker.username)}'s current status: `,
+            new Elements.Span(tracker_utils.user_status_to_string(user_status.status)).set_attr('id', 'userStatus'), Elements.SimpleBreak, Elements.SimpleTab,
+            `as of ${user_status.time}`,
+            Elements.SimpleBreak
+        );
+        page.add_contents(Elements.Break(2));
+        if(user_status.status > 0)
+            await generate_users_histroy_table(page, req.user.id, tracker);
+        await generate_users_checkin_table(page, req.user.id, tracker);
+    }else{
+        page.add_contents(new Elements.Center(new Elements.Heading(2, 'You do not have permission to view this user')))
+    }
+    page.set_title("Fruit Login");
+    page.add_javascripts("/public/javascripts/tracker.js");
+    res.send(page.to_html());
+});
+
+
+router.get('/schedule', async function (req, res) {
+	let targetUser = req.user.id;
+    let page = web_components.standardPage(req.user);
+    let tracker;
+    if (tracker = await tracker_utils.getUserTrackerId(req.user.id)) {
+        page.add_contents(new Elements.Center(new Elements.Heading(2, `Schedule of ${web_components.escape(req.user.username)}`)));
+        page.add_contents(new Elements.Divider().set_attr('id', 'scheduleContainer'));
+    }else{
+        page.add_contents(new Elements.Center(new Elements.Heading('2', 'You do not have a tracking account with which to create')))
+    }
+    page.set_title("Fruit Login");
+    page.set_attr('onLoad', "loadUserSchedule('scheduleContainer')");
+    page.add_javascripts("/public/javascripts/tracker.js");
+    res.send(page.to_html());
 });
 
 module.exports = router;
