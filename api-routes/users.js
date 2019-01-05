@@ -56,7 +56,7 @@ router.post('/register', async function (req, res) {
             "RETURNING id, username, is_validated", [username, email, pwordhash, salt]);
         let validation = await db.one("INSERT INTO user_validation (user_id, confirmation) VALUES ($1, $2) RETURNING confirmation", [user.id, create_salt(32)]);
         mail.send_mail(email, `${username}! Confirm your registration to FruitBowl Entertainment`,
-            `http://${process.env.DOMAIN}/login/validate?username=${username}&confirmation=${validation.confirmation}`);
+            `${process.env.SECURE_PORT ? 'https' : 'http'}://${process.env.DOMAIN}/login/validate?username=${username}&confirmation=${validation.confirmation}`);
         res.json({
             success: true
         });
