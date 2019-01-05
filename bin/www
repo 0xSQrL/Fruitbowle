@@ -7,6 +7,23 @@
 var app = require('../app');
 var debug = require('debug')('webrts:server');
 var http = require('http');
+var fs = require('fs');
+var https = require('https');
+
+if(process.env.SECURE) {
+    const privateKey = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/privkey.pem', 'utf8');
+    const certificate = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/cert.pem', 'utf8');
+    const ca = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/chain.pem', 'utf8');
+    const credentials = {
+        key: privateKey,
+        cert: certificate,
+        ca: ca
+    };
+    const httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(443);
+    httpsServer.on('error', onError);
+    httpsServer.on('listening', onListening);
+}
 
 /**
  * Get port from environment and store in Express.
