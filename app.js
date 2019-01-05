@@ -29,6 +29,7 @@ html_builder.default_description = "Fruit Bowl Entertainment is a website that d
 app.use(express.json());
 app.use(cookieParser());
 app.use('/public', express.static('./public'));
+app.use('/', express.static('./public/pages'));
 
 app.use(function(req, res, next) {
     if(req.cookies['token']) {
