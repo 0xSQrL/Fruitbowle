@@ -11,9 +11,9 @@ var fs = require('fs');
 var https = require('https');
 
 if(process.env.SECURE_PORT) {
-    const privateKey = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/privkey.pem', 'utf8');
-    const certificate = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/cert.pem', 'utf8');
-    const ca = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/chain.pem', 'utf8');
+    const privateKey = fs.readFileSync('/etc/letsencrypt/live/fruitbowle.com/privkey.pem', 'utf8');
+    const certificate = fs.readFileSync('/etc/letsencrypt/live/fruitbowle.com/cert.pem', 'utf8');
+    const ca = fs.readFileSync('/etc/letsencrypt/live/fruitbowle.com/chain.pem', 'utf8');
     const credentials = {
         key: privateKey,
         cert: certificate,
