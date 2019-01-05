@@ -10,7 +10,7 @@ var http = require('http');
 var fs = require('fs');
 var https = require('https');
 
-if(process.env.SECURE) {
+if(process.env.SECURE_PORT) {
     const privateKey = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/privkey.pem', 'utf8');
     const certificate = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/cert.pem', 'utf8');
     const ca = fs.readFileSync('/etc/letsencrpyt/live/fruitbowle.com/chain.pem', 'utf8');
@@ -20,7 +20,7 @@ if(process.env.SECURE) {
         ca: ca
     };
     const httpsServer = https.createServer(credentials, app);
-    httpsServer.listen(443);
+    httpsServer.listen(process.env.SECURE_PORT);
     httpsServer.on('error', onError);
     httpsServer.on('listening', onListening);
 }
