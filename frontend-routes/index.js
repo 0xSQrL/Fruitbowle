@@ -20,6 +20,7 @@ try {
             new Elements.Heading(2, "Welcome to Fruit Bowl E(ntertainment)"),
             new Elements.Heading(3, "The plaid clad website")
         ),
+        "This website is still under construction, please excuse our dust.", Elements.Break,
         new Elements.Link('/tracker', 'Tracker')
     );
     page.set_title("Fruit Bowl Home!");
