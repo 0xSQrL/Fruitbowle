@@ -14,6 +14,7 @@ function HTMLDocument() {
     let javascripts = [];
     let contents = [];
     let bodyAttr = {};
+    let requiresSecure = false;
 
     this.get_title = function () {
         return title;
@@ -22,7 +23,7 @@ function HTMLDocument() {
         title = new_title;
     };
     this.get_description = function () {
-        return title;
+        return description;
     };
     this.set_description = function (new_description) {
         description = new_description;
