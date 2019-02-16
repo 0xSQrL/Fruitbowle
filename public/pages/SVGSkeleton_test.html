@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skeleton Testing Ground</title>
+    <script src="/public/javascripts/SVGSkeleton.js"></script>
+</head>
+<body>
+<canvas width="1000" height="1000" id="canvas">
+
+</canvas>
+<script>
+    const canvas = document.getElementById("canvas");
+    const context = canvas.getContext("2d");
+    let joints = [];
+	joints.push(new Joint(0, 37, 0));
+	joints.push(new Joint(0, 75, 0));
+	joints.push(new Joint(0, 150, 0));
+	joints.push(new Joint(300, 300, 0));
+	joints[0].parent = joints[1];
+	joints[1].parent = joints[2];
+	joints[2].parent = joints[3];
+	function draw_joints(){
+		for (let i = 0; i < joints.length; i++) {
+			let joint = joints[i];
+			context.fillStyle = (i === 0) ? "#AAAAFF" : "#FF0000";
+			let pos = joint.get_position();
+            context.fillRect(pos.x, pos.y, 10, 10)
+		}
+    }
+    setInterval(function(){
+		//context.clearRect(0, 0, canvas.width, canvas.height);
+		joints[3].rotation += 2 / 180 * Math.PI;
+		joints[2].rotation += 0.5 / 180 * Math.PI;
+		joints[1].rotation += 0.25 / 180 * Math.PI;
+    	draw_joints();
+    }, 10);
+    draw_joints();
+</script>
+</body>
+</html>
