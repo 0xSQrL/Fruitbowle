@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fruitbowle Java IDE</title>
+    <script>
+        function analyzeText(event){
+        	let ideEdit = document.getElementById("ideEdit");
+        	let key = event.key;
+        	let selectedIndex = getSelectionIndex(ideEdit);
+			//ideEdit.innerText = insertAt(ideEdit.innerText, selectedIndex, autoCompleteBrackets(key));
+			setSelectionIndex(ideEdit, selectedIndex);
+        }
+
+        function autoCompleteBrackets(key){
+        	switch (key) {
+				case '{':
+					return '}';
+				case '[':
+					return ']';
+				case '(':
+					return ')';
+                default:
+                	return '';
+			}
+
+        }
+
+		function insertAt(text, index, insertion){
+			let start = text.substring(0, index);
+			let end = text.substring(index, text.length);
+			return `${start}${insertion}${end}`;
+		}
+
+		function getSelectionIndex(element){
+			element.focus();
+			let _range = document.getSelection().getRangeAt(0);
+			let range = _range.cloneRange();
+			range.selectNodeContents(element);
+			range.setStart(_range.startContainer, _range.startOffset);
+			return _range.endOffset;
+		}
+
+		function setSelectionIndex(element, position){
+			let range = document.getSelection().getRangeAt(0);
+			console.log(`${position} ${range.endOffset}`);
+			range.endOffset = position;
+			//range.collapse(false);
+		}
+
+        function init(){
+
+			let ideEdit = document.getElementById("ideEdit");
+			ideEdit.innerText = "Test 123";
+        }
+    </script>
+    <style>
+        .ideEdit{
+            width: 80%;
+            min-height: 10rem;
+            border: black 1px solid;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body spellcheck="false"  onload="init()">
+<div contenteditable="true" class="ideEdit" onkeydown="analyzeText(event)" id="ideEdit"></div>
+</body>
+</html>
