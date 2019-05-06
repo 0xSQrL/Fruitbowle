@@ -2,6 +2,7 @@ const express = require('express');
 const filesystem = require('fs');
 const users = require('./users');
 const tracking = require('./tracking');
+const java = require('./javaCompiler');
 
 const router = express.Router();
 
@@ -15,6 +16,10 @@ router.get('/', (request, response) => {
 router.use('/users', users);
 
 router.use('/tracker', tracking);
+
+router.use('/java', java);
+
+
 
 
 module.exports = router;

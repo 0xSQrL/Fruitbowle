@@ -3,13 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <title>Fruitbowle Java IDE</title>
+    <script src="/public/javascripts/jquery-3.3.1.min.js"></script>
+    <script src="/public/javascripts/basic_utils.js"></script>
     <script>
         function analyzeText(event){
         	let ideEdit = document.getElementById("ideEdit");
         	let key = event.key;
         	let selectedIndex = getSelectionIndex(ideEdit);
-			//ideEdit.innerText = insertAt(ideEdit.innerText, selectedIndex, autoCompleteBrackets(key));
+            if (event.keyCode === 9) { // tab key
+                event.preventDefault();
+                ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, `&nbsp&nbsp&nbsp&nbsp`);
+            }
+			ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, autoCompleteBrackets(key));
 			setSelectionIndex(ideEdit, selectedIndex);
+        }
+
+        function moveCursor(order){
+
+            let ideEdit = document.getElementById("ideEdit");
+
+            let selectedIndex = getSelectionIndex(ideEdit);
+
+            setSelectionIndex(ideEdit, selectedIndex + order);
         }
 
         function autoCompleteBrackets(key){
@@ -42,16 +57,37 @@
 		}
 
 		function setSelectionIndex(element, position){
-			let range = document.getSelection().getRangeAt(0);
-			console.log(`${position} ${range.endOffset}`);
-			range.endOffset = position;
-			//range.collapse(false);
+            let selection = document.getSelection();
+            let selectionRange = selection.getRangeAt(0);
+            let range = document.createRange();
+            console.log(`${position} ${selectionRange.endOffset}`);
+			range.setStart(element, position);
+			range.collapse(true);
+			selection.removeAllRanges();
+			selection.addRange(range);
+
 		}
 
         function init(){
 
 			let ideEdit = document.getElementById("ideEdit");
 			ideEdit.innerText = "Test 123";
+        }
+
+        function postCode(){
+            send_api_call("/api/java/load", "GET", {}, {
+                success: function (data) {
+                    alert(data.files.length)
+                },
+                error: function (data) {
+                    alert('Error');
+                }
+            });
+        }
+
+        function File(filename){
+            this.filename = filename;
+            this.contents = "";
         }
     </script>
     <style>
@@ -65,5 +101,7 @@
 </head>
 <body spellcheck="false"  onload="init()">
 <div contenteditable="true" class="ideEdit" onkeydown="analyzeText(event)" id="ideEdit"></div>
+<button onclick="moveCursor(-1)">&lt</button><button onclick="moveCursor(1)">&gt</button><br>
+<button onclick="postCode()">Post</button>
 </body>
 </html>
