@@ -6,7 +6,8 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-
+    if(!req.secure && process.env.SECURE_PORT)
+        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
     let page = web_components.standardPage(req.user,
         new Elements.Form(
             "Username", Elements.SimpleBreak,
@@ -25,6 +26,8 @@ router.get('/', (req, res) => {
 
 router.get('/register', (req, res) => {
 
+    if(!req.secure && process.env.SECURE_PORT)
+        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
     let page = web_components.standardPage(req.user,
         new Elements.Form(
             "Username", Elements.SimpleBreak,
@@ -48,6 +51,8 @@ router.get('/register', (req, res) => {
 
 router.get('/post-reg', (req, res) => {
 
+    if(!req.secure && process.env.SECURE_PORT)
+        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
     let email = req.query.email;
 
     let page = web_components.standardPage(req.user,
@@ -66,6 +71,8 @@ router.get('/post-reg', (req, res) => {
 
 router.get('/validate', (req, res) => {
 
+    if(!req.secure && process.env.SECURE_PORT)
+        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
     let page = web_components.standardPage(req.user,
         new Elements.Center(
             new Elements.Heading(2, "Loading...").set_attr("id", "status"),
