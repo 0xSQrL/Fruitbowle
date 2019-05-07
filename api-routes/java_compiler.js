@@ -1,4 +1,4 @@
-const {exec} = require('child_process');
+const {exec, execFile} = require('child_process');
 const express = require('express');
 const fs = require('fs');
 const router = express.Router();
@@ -10,13 +10,17 @@ router.post('/submit', async function (req, res) {
     let folders = getUserFolders(req.user);
     let files = req.body.files;
 
-    console.log(files);
+    for(let i = 0; i < files.length; i++){
+        let file = files[i];
+        if(!javaCodeIsValid(file.contents))
+            return res.status(406).json({
+                success: false
+            });
 
-    files.forEach(file =>{
         fs.writeFile(`${folders.source}/${file.filename}`, file.contents);
-    });
+    }
 
-    return res.status(201).json({
+    return res.status(200).json({
         success: true
     });
 });
@@ -35,20 +39,45 @@ router.get('/load', async function (req, res) {
 
 });
 
+router.post('/compile', async function (req, res) {
+
+    const javaCompile = "\"C:\\Program Files\\Java\\jdk1.8.0_161\\bin\\javac.exe\"";
+    let folders = getUserFolders(req.user);
+
+    exec(`${javaCompile} -d ${windowsFiles(folders.binary)} ${windowsFiles(folders.source)}\\*.java`, {},(error, stdout, stderr) =>{
+        res.status(200).json({
+            cmdOut: stdout,
+            error: error,
+            cmdErr: stderr,
+        });
+    });
+});
+
+router.post('/run', async function (req, res) {
+
+    const javaRun = "\"C:\\Program Files\\Java\\jdk1.8.0_161\\bin\\java.exe\"";
+    let folders = getUserFolders(req.user);
+
+    exec(`${javaRun} ${req.body.main}`, {cwd : folders.binary},(error, stdout, stderr) =>{
+        res.status(200).json({
+            cmdOut: stdout,
+            error: error,
+            cmdErr: stderr,
+        });
+    });
+});
+
 function javaCodeIsValid(text){
-
-    const validImport = /import\s+java\.*;/;
-    const invalidImport = /import\sjava\.util\.\S*;/;
-
-    if(validImport.test(text)){
-        //Has import
-
-    }
+    const invalidImport = /import\s/;
 
     if(invalidImport.test(text))
         return false;
 
     return true;
+}
+
+function windowsFiles(path){
+    return path.replace(/\//g, '\\');
 }
 
 function getUserFolders(user){
@@ -66,14 +95,6 @@ function getUserFolders(user){
     return {base: userFolder,
             source: sourceFolder,
             binary: binaryFolder};
-}
-
-function sourceFolder(userFolder){
-    return `${userFolder}/src`;
-}
-
-function binariesFolder(userFolder) {
-
 }
 
 function establishBaseFolder(){

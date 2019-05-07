@@ -6,15 +6,16 @@
     <script src="/public/javascripts/jquery-3.3.1.min.js"></script>
     <script src="/public/javascripts/basic_utils.js"></script>
     <script>
+        const tab = `&nbsp&nbsp&nbsp&nbsp`;
         function analyzeText(event){
         	let ideEdit = document.getElementById("ideEdit");
         	let key = event.key;
         	let selectedIndex = getSelectionIndex(ideEdit);
             if (event.keyCode === 9) { // tab key
                 event.preventDefault();
-                ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, `&nbsp&nbsp&nbsp&nbsp`);
+                //ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, `&nbsp&nbsp&nbsp&nbsp`);
             }
-			ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, autoCompleteBrackets(key));
+			//ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, autoCompleteBrackets(key));
 			setSelectionIndex(ideEdit, selectedIndex);
         }
 
@@ -71,18 +72,65 @@
         function init(){
 
 			let ideEdit = document.getElementById("ideEdit");
-			ideEdit.innerText = "Test 123";
+			ideEdit.innerHTML =
+                `public class Test{<br>
+                    <br>
+                    ${tab}\npublic static void main(String[] args){<br>
+                        ${tab}${tab}\nSystem.out.println("Hello");<br>
+                    ${tab}}<br>
+                }`;
         }
 
-        function postCode(){
-            send_api_call("/api/java/load", "GET", {}, {
+        function postCode(callback){
+            let test = new File("Test.java");
+            test.contents = ideEdit.innerText;
+            send_api_call("/api/java/submit", "POST", {files: [test]}, {
                 success: function (data) {
-                    alert(data.files.length)
+                    addStdOut("File Saved");
+                    if(callback)
+                        callback();
                 },
                 error: function (data) {
                     alert('Error');
                 }
             });
+        }
+        function compile(){
+            postCode(()=>{
+                send_api_call("/api/java/compile", "POST", {}, {
+                    success: function (data) {
+                        addCmdOutput(data);
+                    }
+                });
+            });
+
+        }
+        function run(callback){
+            send_api_call("/api/java/run", "POST", {main: "Test"}, {
+                success: function (data) {
+                    addCmdOutput(data);
+                    if(callback)
+                        callback();
+                }
+            });
+        }
+
+        function addCmdOutput(data){
+            if(data.cmdErr)
+                addStdErr(data.cmdErr);
+            if(data.cmdOut)
+                addStdOut(data.cmdOut);
+        }
+
+        function addStdOut(text){
+            let output = document.getElementById("output");
+            output.innerHTML += text.replace(/\r\n/g, `<br>`);
+            output.innerHTML += "<br>";
+            output.scrollBy(0, output.scrollHeight);
+        }
+
+        function addStdErr(text){
+            addStdOut(`<span class="error">${text}</span>`);
         }
 
         function File(filename){
@@ -92,16 +140,35 @@
     </script>
     <style>
         .ideEdit{
-            width: 80%;
-            min-height: 10rem;
+            height: 20rem;
             border: black 1px solid;
             padding: 1rem;
+            overflow-x: auto;
+        }
+        .output{
+            background: #111111;
+            border: #BA6E37 solid 2px;
+            padding: 1rem 0.5rem 1rem 0.5rem;
+            height: 20rem;
+            color: #CCCCAA;
+            overflow-x: auto;
+        }
+        .error{
+            color: #BC0000;
         }
     </style>
 </head>
 <body spellcheck="false"  onload="init()">
-<div contenteditable="true" class="ideEdit" onkeydown="analyzeText(event)" id="ideEdit"></div>
+<table style="width: 100%; height: 100%">
+    <tr>
+        <td style="width: 30%"><div class="output" id="output"></div></td>
+        <td style="width: 70%"><div contenteditable="true" class="ideEdit" onkeydown="" id="ideEdit"></div></td>
+    </tr>
+</table>
+
 <button onclick="moveCursor(-1)">&lt</button><button onclick="moveCursor(1)">&gt</button><br>
-<button onclick="postCode()">Post</button>
+<button onclick="postCode()">Save</button>
+<button onclick="compile()">Compile</button>
+<button onclick="run()">Run</button>
 </body>
 </html>
