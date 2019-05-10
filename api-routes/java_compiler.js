@@ -55,7 +55,7 @@ router.get('/load', async function (req, res) {
 router.post('/compile', async function (req, res) {
 
     applyTempName(req);
-    const javaCompile = "\"C:\\Program Files\\Java\\jdk1.8.0_161\\bin\\javac.exe\"";
+    const javaCompile = "javac";
     let folders = getUserFolders(req.user);
 
     exec(`${javaCompile} -d ${windowsFiles(folders.binary)} ${windowsFiles(folders.source)}\\*.java`, {timeout: 10000},(error, stdout, stderr) =>{
@@ -69,7 +69,7 @@ router.post('/compile', async function (req, res) {
 
 router.post('/run', async function (req, res) {
     applyTempName(req);
-    const javaRun = "\"C:\\Program Files\\Java\\jdk1.8.0_161\\bin\\java.exe\"";
+    const javaRun = "java";
     let folders = getUserFolders(req.user);
 
     exec(`${javaRun} ${req.body.main}`, {cwd : folders.binary, timeout: 10000},(error, stdout, stderr) =>{
