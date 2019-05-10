@@ -21,7 +21,6 @@ router.post('/submit', async function (req, res) {
     applyTempName(req);
     let folders = getUserFolders(req.user);
     let files = req.body.files;
-
     for(let i = 0; i < files.length; i++){
         let file = files[i];
         if(!javaCodeIsValid(file.contents))
@@ -29,7 +28,7 @@ router.post('/submit', async function (req, res) {
                 success: false
             });
 
-        fs.writeFile(`${folders.source}/${file.filename}`, file.contents);
+        fs.writeFileSync(`${folders.source}/${file.filename}`, file.contents);
     }
 
     return res.status(200).json({
