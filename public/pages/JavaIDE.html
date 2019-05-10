@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fruitbowle Java IDE</title>
+    <script src="/public/javascripts/jquery-3.3.1.min.js"></script>
+    <script src="/public/javascripts/basic_utils.js"></script>
+    <script>
+        const tab = `&nbsp&nbsp&nbsp&nbsp`;
+
+        let userFiles = [new File("Main")];
+
+        let activeFile = 0;
+
+        let userProfile = null;
+
+        function analyzeText(event){
+        	let ideEdit = document.getElementById("ideEdit");
+        	let key = event.key;
+        	let selectedIndex = getSelectionIndex(ideEdit);
+            if (event.keyCode === 9) { // tab key
+                event.preventDefault();
+                //ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, `&nbsp&nbsp&nbsp&nbsp`);
+            }
+			//ideEdit.innerHTML = insertAt(ideEdit.innerText, selectedIndex, autoCompleteBrackets(key));
+			//setSelectionIndex(ideEdit, selectedIndex);
+
+            userFiles[activeFile].contents = ideEdit.innerHTML.replace(/<br>\s*<\/div>/g, "\n").replace(/<br>/g, "\n").replace(/<div>/g, "").replace(/<\/div>/g, "\n");
+        }
+
+        function moveCursor(order){
+
+            let ideEdit = document.getElementById("ideEdit");
+
+            let selectedIndex = getSelectionIndex(ideEdit);
+
+            setSelectionIndex(ideEdit, selectedIndex + order);
+        }
+
+        function autoCompleteBrackets(key){
+        	switch (key) {
+				case '{':
+					return '}';
+				case '[':
+					return ']';
+				case '(':
+					return ')';
+                default:
+                	return '';
+			}
+
+        }
+
+		function insertAt(text, index, insertion){
+			let start = text.substring(0, index);
+			let end = text.substring(index, text.length);
+			return `${start}${insertion}${end}`;
+		}
+
+		function getSelectionIndex(element){
+			element.focus();
+			let _range = document.getSelection().getRangeAt(0);
+			let range = _range.cloneRange();
+			range.selectNodeContents(element);
+			range.setStart(_range.startContainer, _range.startOffset);
+			return _range.endOffset;
+		}
+
+		function setSelectionIndex(element, position){
+            let selection = document.getSelection();
+            let selectionRange = selection.getRangeAt(0);
+            let range = document.createRange();
+            console.log(`${position} ${selectionRange.endOffset}`);
+			range.setStart(element, position);
+			range.collapse(true);
+			selection.removeAllRanges();
+			selection.addRange(range);
+
+		}
+
+        function init(){
+
+			let ideEdit = document.getElementById("ideEdit");
+			userFiles[0].contents =
+                `public class Main{
+                    public static void main(String[] args){
+                         System.out.println("Hello");
+                    }
+                }`;
+            send_api_call("/api/java/isUser", "GET", {}, {
+                success: function (data) {
+                    if(!data.isUser) {
+                        while(userProfile == null || userProfile.length < 1)
+                            userProfile = prompt("Please Provide a username:");
+                    }
+                },
+            });
+            reloadTabs();
+            openFile(0);
+
+        }
+
+        function postCode(callback){
+            let tempFiles = [];
+            for(let i = 0; i < userFiles.length; i++) {
+                let file = userFiles[i];
+                let tempFile = new File(file.filename + ".java");
+                tempFile.contents = file.contents.replace(/\u00a0/g, ' ');
+                tempFiles.push(tempFile);
+            }
+
+            send_api_call("/api/java/submit", "POST", {files: tempFiles, tempUsername: userProfile}, {
+                success: function (data) {
+                    addStdOut("File Saved");
+                    if(callback)
+                        callback();
+                },
+                error: function (data) {
+                    alert('Error');
+                }
+            });
+        }
+
+        function compile(callback){
+            postCode(()=>{
+                send_api_call("/api/java/compile", "POST", {tempUsername: userProfile}, {
+                    success: function (data) {
+                        addCmdOutput(data);
+                        if(callback)
+                            callback();
+                    }
+                });
+            });
+
+        }
+        function run(callback){
+            let options = document.getElementById("mainFile");
+            compile(() =>{
+                    send_api_call("/api/java/run", "POST", {main: options.value, tempUsername: userProfile}, {
+                        success: function (data) {
+                            addCmdOutput(data);
+                            if(callback)
+                                callback();
+                        }
+                    });
+                }
+            );
+        }
+
+        function addCmdOutput(data){
+            if(data.cmdErr)
+                addStdErr(data.cmdErr);
+            if(data.cmdOut)
+                addStdOut(data.cmdOut);
+        }
+
+        function addStdOut(text){
+            let output = document.getElementById("output");
+            output.innerHTML += text.replace(/\r\n/g, `<br>`);
+            output.innerHTML += "<br>";
+            output.scrollBy(0, output.scrollHeight);
+        }
+
+        function addStdErr(text){
+            addStdOut(`<span class="error">${text}</span>`);
+        }
+
+        function File(filename){
+            this.filename = filename;
+            this.contents = `public class ${filename}{
+            }`;
+        }
+        function reloadTabs(){
+
+            let tabBar = document.getElementById("pageTabs");
+            let options = document.getElementById("mainFile");
+            options.innerHTML = '';
+            tabBar.innerHTML = `<span class="tab" onclick="addFile()" style="background: chartreuse; font-weight: bold">+</span>`;
+            for(let i = 0; i < userFiles.length; i++){
+                let file = userFiles[i];
+                tabBar.innerHTML += `<span class="tab ${i === activeFile ? "selectedTab" : ""}" onclick="openFile(${i})">${file.filename}</span>`
+                let option = document.createElement('option');
+                option.appendChild( document.createTextNode(file.filename) );
+                option.value = file.filename;
+                options.appendChild(option);
+
+            }
+        }
+        function addFile(){
+            let filename = prompt("File Name:");
+            if(filename === null || filename.length < 1)
+                return;
+            userFiles.push(new File(filename));
+            reloadTabs();
+        }
+        function openFile(i){
+            let ideEdit = document.getElementById("ideEdit");
+            ideEdit.innerText = userFiles[i].contents;
+            activeFile = i;
+            reloadTabs();
+        }
+    </script>
+    <style>
+        .ideEdit{
+            height: 20rem;
+            border: black 1px solid;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .output{
+            background: #111111;
+            border: #BA6E37 solid 2px;
+            padding: 1rem 0.5rem 1rem 0.5rem;
+            height: 22rem;
+            color: #CCCCAA;
+            overflow-x: auto;
+        }
+        .tab{
+            background: white;
+            border: #000000 solid 1px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            height: 1rem;
+            padding: 0.5rem;
+            position: relative;
+            top: 0.25rem;
+        }
+        .selectedTab{
+            background: #F26507;
+        }
+        #pageTabs{
+            min-height: 2rem;
+        }
+        .error{
+            color: #BC0000;
+        }
+    </style>
+</head>
+<body spellcheck="false"  onload="init()">
+<table style="width: 100%; height: 100%">
+    <tr>
+        <td style="width: 30%"><div class="output" id="output"></div></td>
+        <td style="width: 70%"><div id="pageTabs"></div><div contenteditable="true" class="ideEdit" onkeyup="analyzeText(event)" id="ideEdit"></div></td>
+    </tr>
+</table>
+Main:
+<select id="mainFile" style="width:10rem">
+
+</select>
+<button onclick="postCode()">Save</button>
+<button onclick="compile()">Compile</button>
+<button onclick="run()">Run</button>
+</body>
+</html>

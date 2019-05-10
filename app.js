@@ -30,6 +30,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/public', express.static('./public'));
 app.use('/', express.static('./public/pages'));
+app.use('/ide', express.static('./public/pages/JavaIDE.html'));
 
 app.use(function(req, res, next) {
     if(req.cookies['token']) {
@@ -49,9 +50,11 @@ app.use(function(req, res, next) {
 app.use(jwt({ secret: process.env.JWT_SECRET }).unless({ path: [
         '/api',
         /\/api\/users*/,
+        /\/api\/java*/,
         /\/public*/,
         "/",
-        /\/login*/
+        /\/login*/,
+        '/ide'
     ]}));
 
 app.use((jwt_error, request, response, next) => {
