@@ -5,8 +5,20 @@ const router = express.Router();
 
 const topFolder = "javacompiler";
 
+router.get('/isUser', async function (req, res) {
+    let userExists = false;
+
+    if(req.user)
+        userExists = true;
+
+    return res.status(200).json({
+        isUser: userExists
+    });
+});
+
 router.post('/submit', async function (req, res) {
 
+    applyTempName(req);
     let folders = getUserFolders(req.user);
     let files = req.body.files;
 
@@ -27,6 +39,7 @@ router.post('/submit', async function (req, res) {
 
 router.get('/load', async function (req, res) {
 
+    applyTempName(req);
     let folders = getUserFolders(req.user);
     let fileObjects = [];
     let files = fs.readdirSync(folders.source);
@@ -41,10 +54,11 @@ router.get('/load', async function (req, res) {
 
 router.post('/compile', async function (req, res) {
 
+    applyTempName(req);
     const javaCompile = "\"C:\\Program Files\\Java\\jdk1.8.0_161\\bin\\javac.exe\"";
     let folders = getUserFolders(req.user);
 
-    exec(`${javaCompile} -d ${windowsFiles(folders.binary)} ${windowsFiles(folders.source)}\\*.java`, {},(error, stdout, stderr) =>{
+    exec(`${javaCompile} -d ${windowsFiles(folders.binary)} ${windowsFiles(folders.source)}\\*.java`, {timeout: 10000},(error, stdout, stderr) =>{
         res.status(200).json({
             cmdOut: stdout,
             error: error,
@@ -54,11 +68,11 @@ router.post('/compile', async function (req, res) {
 });
 
 router.post('/run', async function (req, res) {
-
+    applyTempName(req);
     const javaRun = "\"C:\\Program Files\\Java\\jdk1.8.0_161\\bin\\java.exe\"";
     let folders = getUserFolders(req.user);
 
-    exec(`${javaRun} ${req.body.main}`, {cwd : folders.binary},(error, stdout, stderr) =>{
+    exec(`${javaRun} ${req.body.main}`, {cwd : folders.binary, timeout: 10000},(error, stdout, stderr) =>{
         res.status(200).json({
             cmdOut: stdout,
             error: error,
@@ -100,6 +114,12 @@ function getUserFolders(user){
 function establishBaseFolder(){
     if(!fs.existsSync(topFolder))
         fs.mkdirSync(topFolder);
+}
+
+function applyTempName(req){
+    if(!req.user) {
+        req.user = {id: encodeURIComponent(req.body.tempUsername)};
+    }
 }
 
 module.exports = router;
