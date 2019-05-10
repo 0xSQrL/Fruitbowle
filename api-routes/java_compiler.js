@@ -58,7 +58,7 @@ router.post('/compile', async function (req, res) {
     const javaCompile = "javac";
     let folders = getUserFolders(req.user);
 
-    exec(`${javaCompile} -d ${windowsFiles(folders.binary)} ${windowsFiles(folders.source)}\\*.java`, {timeout: 10000},(error, stdout, stderr) =>{
+    exec(`${javaCompile} -d ${windowsFiles(folders.binary)} ${windowsFiles(folders.source)}/*.java`, {timeout: 10000},(error, stdout, stderr) =>{
         res.status(200).json({
             cmdOut: stdout,
             error: error,
@@ -91,7 +91,7 @@ function javaCodeIsValid(text){
 }
 
 function windowsFiles(path){
-    return path.replace(/\//g, '\\');
+    return path;//.replace(/\//g, '\\');
 }
 
 function getUserFolders(user){
