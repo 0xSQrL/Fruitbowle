@@ -30,7 +30,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/public', express.static('./public'));
 app.use('/', express.static('./public/pages'));
-app.use('/ide', express.static('./public/pages/JavaIDE.html'));
 
 app.use(function(req, res, next) {
     if(req.cookies['token']) {
