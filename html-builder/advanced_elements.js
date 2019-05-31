@@ -1,4 +1,5 @@
 const basics = require('./basic_elements');
+const fs = require('fs');
 
 let Row = function (id, ...rows) {
     basics.BasicContainer.call(this, `tr`, ...rows);
@@ -77,5 +78,27 @@ module.exports.Table.prototype.set_data = function(data, first_row_title, per_ro
 		}
 	}
     return this;
+};
+
+module.exports.Subpage = function (path) {
+	this.path = path;
+	this.replacements = [];
+	let replacements = this.replacements;
+	let self = this;
+	this.add_substitution = function (key, value) {
+		replacements.push({
+			key: key,
+			value: value
+		});
+		return self;
+	};
+	this.to_html = function () {
+		let fileContent = fs.readFileSync(path, 'utf8');
+		replacements.forEach((kvPair)=>{
+			let pattern = new RegExp(kvPair.key, "g");
+			fileContent = fileContent.replace(pattern, kvPair.value);
+		});
+		return fileContent;
+	};
 };
 

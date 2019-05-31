@@ -4,11 +4,8 @@ module.exports.escape = escape;
 const Elements = html_builder.Elements;
 
 module.exports.topbar = function (user) {
-    const logo = new Elements.Link("/",
-        new Elements.Image("/public/images/CoffeeSquirrel.png").set_attr("class", "top_icon"),
-        new Elements.Span("Fruit Bowl Entertainment").set_attr("class", "logo_text")
-    ).set_attr("class", "ignorant");
-    let user_management = new Elements.Divider();
+
+	let user_management = new Elements.Divider();
     if(user){
         user_management.add_contents(
             `Welcome ${escape(user.username)}! `,
@@ -21,11 +18,9 @@ module.exports.topbar = function (user) {
         );
     }
     user_management.set_attr("class", "user_management");
-
-    return new Elements.Span(
-        new Elements.Divider(logo, user_management).set_attr("class", "headbar"),
-        new Elements.Divider().set_attr("class", "divider")
-    );
+	let topbarTemplate = new Elements.Subpage("private/page-segments/global/Topbar.html");
+	topbarTemplate.add_substitution("<user-management/>", user_management.to_html());
+    return topbarTemplate;
 };
 
 module.exports.standardPage = function(user, ...content){
@@ -49,4 +44,15 @@ module.exports.standardPage = function(user, ...content){
 		return this;
 	};
     return page;
+};
+
+
+module.exports.force_ssl = function(req, res){
+
+	if(!req.secure && process.env.SECURE_PORT) {
+		res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
+		return true;
+	}
+	return false;
+
 };

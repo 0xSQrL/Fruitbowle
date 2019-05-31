@@ -16,12 +16,7 @@ router.use('/tracker', tracking_fe);
 router.get('/', (req, res) => {
 try {
     let page = web_components.standardPage(req.user,
-        new Elements.Center(
-            new Elements.Heading(2, "Welcome to Fruit Bowl E(ntertainment)"),
-            new Elements.Heading(3, "The plaid clad website")
-        ),
-        "This website is still under construction, please excuse our dust.", Elements.SimpleBreak,
-        new Elements.Link('/tracker', 'Tracker')
+        new Elements.Subpage('private/page-segments/landing-page.html')
     );
     page.set_title("Fruit Bowl Home!");
     res.send(page.to_html());

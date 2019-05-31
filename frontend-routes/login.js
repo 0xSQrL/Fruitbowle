@@ -6,8 +6,9 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    if(!req.secure && process.env.SECURE_PORT)
-        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
+	if(web_components.force_ssl(req, res))
+		return;
+
     let page = web_components.standardPage(req.user,
         new Elements.Form(
             "Username", Elements.SimpleBreak,
@@ -26,22 +27,10 @@ router.get('/', (req, res) => {
 
 router.get('/register', (req, res) => {
 
-    if(!req.secure && process.env.SECURE_PORT)
-        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
+	if(web_components.force_ssl(req, res))
+		return;
     let page = web_components.standardPage(req.user,
-        new Elements.Form(
-            "Username", Elements.SimpleBreak,
-            new Elements.Form.TextField("username"), new Elements.Span().set_attr("class","error").set_attr("id", "usernameError"), Elements.SimpleBreak,
-            "Email Address", Elements.SimpleBreak,
-            new Elements.Form.TextField("email"), new Elements.Span().set_attr("class","error").set_attr("id", "emailError"), Elements.SimpleBreak,
-            "Password", Elements.SimpleBreak,
-            new Elements.Form.PasswordField("password"), new Elements.Span().set_attr("class","error").set_attr("id", "passwordError"), Elements.SimpleBreak,
-            "Re-enter Password", Elements.SimpleBreak,
-            new Elements.Form.PasswordField("password2"), new Elements.Span().set_attr("class","error").set_attr("id", "password2Error"),
-            Elements.SimpleBreak,
-            Elements.SimpleBreak,
-            new Elements.Form.SubmitButton("Register").set_attr("onClick", "return send_registration_request()")
-        ).set_attr("id", "registration")
+        new Elements.Subpage('private/page-segments/login/registration-form.html')
     );
     page.set_title("Fruit Register");
     page.add_javascripts("/public/javascripts/login.js");
@@ -51,16 +40,15 @@ router.get('/register', (req, res) => {
 
 router.get('/post-reg', (req, res) => {
 
-    if(!req.secure && process.env.SECURE_PORT)
-        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
+	if(web_components.force_ssl(req, res))
+		return;
     let email = req.query.email;
 
+	let content = new Elements.Subpage('private/page-segments/login/post-registration.html');
+	content.add_substitution("<user-email/>", web_components.escape(decodeURI(email)));
+	content.add_substitution("<system-email/>", process.env.EMAIL_ADDRESS);
     let page = web_components.standardPage(req.user,
-        new Elements.Divider(
-            new Elements.Heading(2, "Thank you for registering!"), Elements.SimpleBreak,
-            new Elements.Span(`An email has been sent to <i>${escape(decodeURI(email))}</i> from <i>${process.env.EMAIL_ADDRESS}</i>. 
-                To complete your registration and validate your account, please go to your email and click the provided link.`)
-        )
+		content
     );
     page.set_title("Fruit Register");
     page.add_javascripts("/public/javascripts/login.js");
@@ -70,9 +58,9 @@ router.get('/post-reg', (req, res) => {
 
 
 router.get('/validate', (req, res) => {
+	if(web_components.force_ssl(req, res))
+		return;
 
-    if(!req.secure && process.env.SECURE_PORT)
-        res.redirect(`https://${process.env.DOMAIN}${req.originalUrl}`);
     let page = web_components.standardPage(req.user,
         new Elements.Center(
             new Elements.Heading(2, "Loading...").set_attr("id", "status"),
@@ -85,5 +73,6 @@ router.get('/validate', (req, res) => {
     page.add_javascripts("/public/javascripts/login.js");
     res.send(page.to_html());
 });
+
 
 module.exports = router;

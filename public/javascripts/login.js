@@ -88,6 +88,24 @@ function send_registration_request() {
     return false;
 }
 
+function calculateSecurity(password){
+	let magnitude = 0;
+	if(password.indexOf(/[a-z]/))
+		magnitude += 26;
+	if(password.indexOf(/[A-Z]/))
+		magnitude += 26;
+	if(password.indexOf(/[0-9]/))
+		magnitude += 10;
+	let otherChars = password.replace(/[a-zA-Z0-9]/g, '');
+	let set = new Set();
+	for (let i = 0; i < otherChars.length; i++){
+		set.add(otherChars[i]);
+	}
+	magnitude+= set.length;
+	return magnitude * password.length;
+
+}
+
 function send_validation_request() {
     let form = get_object();
     console.log(form);
