@@ -183,64 +183,75 @@ router.get('/schedule', async function (req, res) {
     return res.status(200).json(checkins);
 });
 
+router.generate_db = async function(){
+	await db.none(`
+		CREATE TABLE IF NOT EXISTS TrackerInfo(
+		id      BigSERIAL PRIMARY KEY,
+		user_id  bigint references users(id) UNIQUE NOT NULL,
+		pin     CHAR(4) NOT NULL
+		);
+		`);
+	await db.none(`
+		CREATE TABLE IF NOT EXISTS TrackerObserver(
+		id           BigSERIAL PRIMARY KEY,
+		tracked_id    bigint REFERENCES TrackerInfo(id) NOT NULL,
+		tracker_id    bigint REFERENCES users(id) NOT NULL,
+		approved     BOOLEAN DEFAULT NULL,
+		CONSTRAINT one_for_one UNIQUE(tracker_id, tracked_id)
+		);
 
+	`);
+	await db.none(`
+		CREATE TABLE IF NOT EXISTS TrackerLog(
+		id              BigSERIAL PRIMARY KEY,
+		tracked_id       bigint REFERENCES TrackerInfo(id) NOT NULL,
+		latitude        DECIMAL(8,5) NOT NULL,
+		longitude       DECIMAL(8,5) NOT NULL,
+		time_made       timestamp NOT NULL DEFAULT NOW(),
+		battery_percent  DECIMAL(3,2),
+		status          smallint
+		);
+	`);
+	await db.none(`
+		CREATE TABLE IF NOT EXISTS TrackerCheckin(
+		id              BigSERIAL PRIMARY KEY,
+		tracked_id       bigint REFERENCES TrackerInfo(id) NOT NULL,
+		time            TIME NOT NULL,
+		plus_time       TIME NOT NULL,
+		minus_time      TIME NOT NULL,
+		on_days         BOOLEAN[7] DEFAULT '{T,T,T,T,T,T,T}'
+		);
+	`);
+	await db.none(`
+		CREATE VIEW TrackerUser AS
+		(SELECT users.id as user_id, users.username, TrackerInfo.id as tracker_id, TrackerInfo.pin FROM users join TrackerInfo on users.id=TrackerInfo.user_id);
+	`);
+	await db.none(`
+		CREATE VIEW TrackerUserLog AS
+		(SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerLog.time_made, TrackerLog.status, TrackerLog.latitude, TrackerLog.longitude, TrackerLog.battery_percent FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerLog on TrackerInfo.id=TrackerLog.tracked_id);
+	`);
+	await db.none(`
+		CREATE VIEW TrackerUserSchedule AS
+		(SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerCheckin.time, TrackerCheckin.plus_time, TrackerCheckin.minus_time, TrackerCheckin.on_days FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerCheckin on TrackerInfo.id=TrackerCheckin.tracked_id);
+	`);
+	await db.none(`
+		CREATE VIEW TrackerUserViewPermissions AS
+		(SELECT TrackerObserver.id, TrackerUser.user_id as tracked_user_id, TrackerUser.username as tracked_username, TrackerUser.tracker_id as tracked_tracker_id, users.id as tracker_user_id, users.username as tracker_username, approved FROM users join TrackerObserver on users.id=TrackerObserver.tracker_id join TrackerUser on TrackerObserver.tracked_id=TrackerUser.tracker_id);
+	`);
+};
 
-/**
+router.delete_db = async function(){
+	await db.none(`
+	DROP TABLE IF EXISTS TrackerInfo CASCADE;
+	DROP TABLE IF EXISTS TrackerObserver CASCADE;
+	DROP TABLE IF EXISTS TrackerLog CASCADE;
+	DROP TABLE IF EXISTS TrackerCheckin CASCADE;
+	DROP VIEW  IF EXISTS TrackerUser CASCADE;
+	DROP VIEW  IF EXISTS TrackerUserLog CASCADE;
+	DROP VIEW  IF EXISTS TrackerUserSchedule CASCADE;
+	DROP VIEW  IF EXISTS TrackerUserViewPermissions CASCADE;
+	`);
+};
 
- DROP TABLE IF EXISTS TrackerInfo CASCADE;
- DROP TABLE IF EXISTS TrackerObserver CASCADE;
- DROP TABLE IF EXISTS TrackerLog CASCADE;
- DROP TABLE IF EXISTS TrackerCheckin CASCADE;
- DROP VIEW  IF EXISTS TrackerUser CASCADE;
- DROP VIEW  IF EXISTS TrackerUserLog CASCADE;
- DROP VIEW  IF EXISTS TrackerUserSchedule CASCADE;
- DROP VIEW  IF EXISTS TrackerUserViewPermissions CASCADE;
-
- CREATE TABLE TrackerInfo(
- id      SERIAL PRIMARY KEY,
- user_id  INTEGER references users(id) UNIQUE NOT NULL,
- pin     CHAR(4) NOT NULL
- );
-
- CREATE TABLE TrackerObserver(
- id           SERIAL PRIMARY KEY,
- tracked_id    INTEGER REFERENCES TrackerInfo(id) NOT NULL,
- tracker_id    INTEGER REFERENCES users(id) NOT NULL,
- approved     BOOLEAN DEFAULT NULL,
- CONSTRAINT one_for_one UNIQUE(tracker_id, tracked_id)
- );
-
- CREATE TABLE TrackerLog(
- id              SERIAL PRIMARY KEY,
- tracked_id       INTEGER REFERENCES TrackerInfo(id) NOT NULL,
- latitude        DECIMAL(8,5) NOT NULL,
- longitude       DECIMAL(8,5) NOT NULL,
- time_made       timestamp NOT NULL DEFAULT NOW(),
- battery_percent  DECIMAL(3,2),
- status          smallint
- );
-
- CREATE TABLE TrackerCheckin(
- id              SERIAL PRIMARY KEY,
- tracked_id       INTEGER REFERENCES TrackerInfo(id) NOT NULL,
- time            TIME NOT NULL,
- plus_time       TIME NOT NULL,
- minus_time      TIME NOT NULL,
- on_days         BOOLEAN[7] DEFAULT '{T,T,T,T,T,T,T}'
- );
-
- CREATE VIEW TrackerUser AS
- (SELECT users.id as user_id, users.username, TrackerInfo.id as tracker_id, TrackerInfo.pin FROM users join TrackerInfo on users.id=TrackerInfo.user_id);
-
- CREATE VIEW TrackerUserLog AS
- (SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerLog.time_made, TrackerLog.status, TrackerLog.latitude, TrackerLog.longitude, TrackerLog.battery_percent FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerLog on TrackerInfo.id=TrackerLog.tracked_id);
-
- CREATE VIEW TrackerUserSchedule AS
- (SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerCheckin.time, TrackerCheckin.plus_time, TrackerCheckin.minus_time, TrackerCheckin.on_days FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerCheckin on TrackerInfo.id=TrackerCheckin.tracked_id);
-
- CREATE VIEW TrackerUserViewPermissions AS
- (SELECT TrackerObserver.id, TrackerUser.user_id as tracked_user_id, TrackerUser.username as tracked_username, TrackerUser.tracker_id as tracked_tracker_id, users.id as tracker_user_id, users.username as tracker_username, approved FROM users join TrackerObserver on users.id=TrackerObserver.tracker_id join TrackerUser on TrackerObserver.tracked_id=TrackerUser.tracker_id);
-
- */
 
 module.exports = router;

@@ -22,13 +22,16 @@ router.post('/login', async function (req, res) {
 	sha256.update(password+userSalt.salt);
 	let pwordhash = sha256.digest('hex');
 
-	let user = await db.oneOrNone("SELECT id, username, is_validated FROM users WHERE username=$1 AND passwordhash=$2", [username, pwordhash]);
+	let user = await db.oneOrNone("SELECT id, username, is_validated, last_password_change FROM users WHERE username=$1 AND passwordhash=$2", [username, pwordhash]);
 
 	if(!user)
 		return res.status(401).json({error: "Username or password invalid"});
 
+	if(!user.is_validated)
+		return res.status(401).json({error: "Email has not yet been confirmed"});
+
 	res.json({
-		token: jwt.sign({id: user.id, username: user.username, is_valid: user.is_validated}, process.env.JWT_SECRET)
+		token: jwt.sign({id: user.id, username: user.username, last_password_change: user.last_password_change}, process.env.JWT_SECRET)
 	});
 });
 
@@ -64,7 +67,7 @@ router.post('/register', async function (req, res) {
             "RETURNING id, username, is_validated", [username, email, pwordhash, salt]);
         let validation = await db.one("INSERT INTO user_validation (user_id, confirmation) VALUES ($1, $2) RETURNING confirmation", [user.id, create_salt(32)]);
         mail.send_mail(email, `${username}! Confirm your registration to FruitBowl Entertainment`,
-            `${process.env.SECURE_PORT ? 'https' : 'http'}://${process.env.DOMAIN}/login/validate?username=${username}&confirmation=${validation.confirmation}`);
+            `${process.env.SECURE_PORT ? 'https' : 'http'}://${process.env.DOMAIN}/login/validate?username=${encodeURI(username)}&confirmation=${validation.confirmation}`);
         res.json({
             success: true
         });
@@ -91,7 +94,7 @@ router.post('/check', async function (req, res) {
 });
 
 router.post('/validate', async function (req, res) {
-    let username = req.body.username;
+    let username = decodeURI(req.body.username);
     let confirmation = req.body.confirmation;
 
     let valid = await db.oneOrNone("SELECT users.id as user_id, user_validation.id as validation_id " +
@@ -126,28 +129,46 @@ function create_salt(characterLength){
     return salt;
 }
 
-/**
 
- CREATE TABLE users (
- id				SERIAL PRIMARY KEY,
- username		varchar(32),
- email_address	varchar(255),
- passwordhash	varchar(255),
- salt			varchar(16),
- is_validated	boolean DEFAULT FALSE,
- date_created	timestamp DEFAULT NOW()
- );
 
- CREATE UNIQUE INDEX unique_username on users (LOWER(username));
- CREATE UNIQUE INDEX unique_email_address on users (LOWER(email_address));
+router.generate_db = async function(){
+	await db.none(`
+		 CREATE TABLE IF NOT EXISTS users (
+		 id				BIGSERIAL PRIMARY KEY,
+		 username		varchar(32),
+		 email_address	varchar(255),
+		 passwordhash	varchar(255),
+		 salt			varchar(16),
+		 is_validated	boolean DEFAULT FALSE,
+		 date_created	timestamp DEFAULT NOW(),
+		 last_password_change	timestamp DEFAULT NOW()
+		 );
+		
+ 		`);
 
- CREATE TABLE user_validation (
- id				SERIAL PRIMARY KEY,
- user_id		integer REFERENCES users(id) ON DELETE CASCADE,
- confirmation	varchar(32)
- );
+	await db.none(`
+		 
+		 CREATE UNIQUE INDEX unique_username on users (LOWER(username));
+		 CREATE UNIQUE INDEX unique_email_address on users (LOWER(email_address));
+		
+ 		`);
 
- */
+	await db.none(`
+		 CREATE TABLE IF NOT EXISTS user_validation (
+		 id				BIGSERIAL PRIMARY KEY,
+		 user_id		bigint REFERENCES users(id) ON DELETE CASCADE,
+		 confirmation	varchar(32)
+		 );
+ 	`);
+};
+
+router.delete_db = async function(){
+	await db.none(`
+	DROP TABLE IF EXISTS users CASCADE;
+	DROP TABLE IF EXISTS user_validation CASCADE;
+	`);
+};
+
 
 
 module.exports = router;

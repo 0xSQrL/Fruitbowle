@@ -33,18 +33,27 @@ app.use('/', express.static('./public/pages'));
 app.use('/favicon.ico', express.static('./public/images/favicon.ico'));
 
 app.use(function(req, res, next) {
+	req.headers['authorization'] = undefined;
     if(req.cookies['token']) {
         req.headers['authorization'] = "BEARER " + req.cookies['token'];
-        jsonwebtoken.verify(req.cookies['token'], process.env.JWT_SECRET, function(err, token){
+        jsonwebtoken.verify(req.cookies['token'], process.env.JWT_SECRET, async function(err, token){
             if(err){
 
             }else{
 
-                req.user = jsonwebtoken.decode(req.cookies['token']);
-            }
+                let tmpUser = jsonwebtoken.decode(req.cookies['token']);
+                let validation = await db.oneOrNone("SELECT id, username, is_validated, last_password_change FROM users WHERE id=$1", [tmpUser.id]);
+                if(validation && validation.is_validated && new Date(tmpUser.last_password_change).getTime() === validation.last_password_change.getTime()) {
+					req.user = tmpUser;
+				}
+
+			}
+
+			next();
         });
-    }
-    next();
+    }else{
+		next();
+	}
 });
 
 app.use(jwt({ secret: process.env.JWT_SECRET }).unless({ path: [

@@ -19,6 +19,7 @@
 	}
 
 	var endpoints = [
+		new endpoint("/api/rebuild_dbs", "POST", {password: ""}),
 		new endpoint("/api/users/login", "POST", {username: "", password: ""}),
 		new endpoint("/api/users/register", "POST", {username: "", email: "@gmail.com", password: ""}),
         new endpoint("/api/users/check?user=", "POST", {}),
