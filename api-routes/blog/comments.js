@@ -6,16 +6,11 @@ const db = require.main.require('./../database');
 
 //Functions
 ////////////
-//Write article
-//Read article
-//Insert redaction
-//Delete article
-//
+//Add comments
+//Edit comments
+//Delete comments
+//Rate Comments
+//Reply to comments
 
 
 module.exports = router;
-
-/**
-
-
- */

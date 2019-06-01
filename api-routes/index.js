@@ -18,7 +18,7 @@ router.get('/', (request, response) => {
 let timeSinceLastRebuild = 0;
 
 router.post('/rebuild_dbs', async (req, res) =>{
-	if(new Date().getTime() > timeSinceLastRebuild + 30000) {
+	if(new Date().getTime() > timeSinceLastRebuild + 1000) {
 		console.log("Rebuilding");
 		timeSinceLastRebuild = new Date().getTime();
 		if (force_ssl(req, res))
