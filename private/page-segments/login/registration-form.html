@@ -1,0 +1,18 @@
+<style>
+    .label{
+        text-align: right;
+    }
+</style>
+
+<form id="registration">
+    <table>
+        <tr><td class="label">Username</td><td><input type="text" name="username"></td><td><span id="usernameError" class="error"></span></td></tr>
+
+        <tr><td class="label">Email Address</td><td><input type="email" name="email"></td><td><span id="emailError" class="error"></span></td></tr>
+
+        <tr><td class="label">Password</td><td><input type="password" name="password"></td><td><span id="passwordError" class="error"></span></td></tr>
+
+        <tr><td class="label">Re-enter Password</td><td><input type="password" name="password2"></td><td><span id="password2Error" class="error"></span></td></tr>
+        <tr><td></td><td><input type="submit" value="Register" onClick="return send_registration_request()"></td><td></td></tr>
+    </table>
+</form>

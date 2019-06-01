@@ -1,0 +1,18 @@
+<style>
+    .label{
+        text-align: right;
+    }
+</style>
+
+<form id="login">
+    <table>
+        <tr><td class="label">Username</td><td><input type="text" name="username"></td><td><span id="usernameError" class="error"></span></td></tr>
+
+        <tr><td class="label">Password</td><td><input type="password" name="password"></td><td><span id="passwordError" class="error"></span></td></tr>
+
+        <tr><td></td><td><input type="submit" value="Login" onClick="return send_login_request()"></td><td></td></tr>
+    </table>
+    <br>
+    <p>Forgot your password? <a href="/login/change-password">Change it here</a></p>
+    <p>Don't have a Fruitbowle account? <a href="/login/register">Register now</a>!</p>
+</form>

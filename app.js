@@ -30,6 +30,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/public', express.static('./public'));
 app.use('/', express.static('./public/pages'));
+app.use('/favicon.ico', express.static('./public/images/favicon.ico'));
 
 app.use(function(req, res, next) {
     if(req.cookies['token']) {
@@ -49,11 +50,11 @@ app.use(function(req, res, next) {
 app.use(jwt({ secret: process.env.JWT_SECRET }).unless({ path: [
         '/api',
         /\/api\/users*/,
-        /\/api\/java*/,
+        ///\/api\/java*/,
         /\/public*/,
         "/",
         /\/login*/,
-        '/ide'
+        //'/ide'
     ]}));
 
 app.use((jwt_error, request, response, next) => {
@@ -82,8 +83,7 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
   const status = err.status || 500;
 	const page = web_components.standardPage(
-		null, new Elements.Center(new Elements.Heading(2, `Error ${status}`), Elements.SimpleBreak,
-		'Nice work, you managed to break everything.', Elements.Break(10), 'I hope you are happy.')
+		req.user, new Elements.Subpage('private/page-segments/errors/GenericError.html').add_substitution('<status/>', status).add_substitution('<multibreak/>', Elements.Break(10))
 	);
   // render the error page
   res.status(status).send(page.to_html());
