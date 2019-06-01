@@ -32,6 +32,14 @@ router.post('/login', async function (req, res) {
 	});
 });
 
+router.put('/change-password', async function (req, res) {
+	//Validate Change Password
+});
+
+router.post('/request-change', async function (req, res) {
+	//Send email
+});
+
 
 router.post('/register', async function (req, res) {
     let username = req.body.username;

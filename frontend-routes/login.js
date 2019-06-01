@@ -10,15 +10,7 @@ router.get('/', (req, res) => {
 		return;
 
     let page = web_components.standardPage(req.user,
-        new Elements.Form(
-            "Username", Elements.SimpleBreak,
-            new Elements.Form.TextField("username"), Elements.SimpleBreak,
-            "Password", Elements.SimpleBreak,
-            new Elements.Form.PasswordField("password"),
-            Elements.SimpleBreak,
-            Elements.SimpleBreak,
-            new Elements.Form.SubmitButton("Login").set_attr("onClick", "return send_login_request()")
-        ).set_attr("id", "login")
+        new Elements.Subpage('private/page-segments/login/login-form.html')
     );
     page.set_title("Fruit Login");
     page.add_javascripts("/public/javascripts/login.js");
@@ -39,34 +31,40 @@ router.get('/register', (req, res) => {
 
 
 router.get('/post-reg', (req, res) => {
-
 	if(web_components.force_ssl(req, res))
 		return;
-    let email = req.query.email;
+	let email = req.query.email;
 
-	let content = new Elements.Subpage('private/page-segments/login/post-registration.html');
-	content.add_substitution("<user-email/>", web_components.escape(decodeURI(email)));
-	content.add_substitution("<system-email/>", process.env.EMAIL_ADDRESS);
-    let page = web_components.standardPage(req.user,
-		content
-    );
-    page.set_title("Fruit Register");
-    page.add_javascripts("/public/javascripts/login.js");
-    res.send(page.to_html());
+	let page = web_components.standardPage(req.user,
+		new Elements.Subpage('private/page-segments/login/post-registration.html')
+			.add_substitution("<user-email/>", web_components.escape(decodeURI(email)))
+			.add_substitution("<system-email/>", process.env.EMAIL_ADDRESS)
+	);
+	page.set_title("Fruit Register");
+	page.add_javascripts("/public/javascripts/login.js");
+
+	res.send(page.to_html());
 });
 
+router.get('/change-password', (req, res) => {
+	if(web_components.force_ssl(req, res))
+		return;
+	let email = req.query.email;
+	let page = web_components.standardPage(req.user,
+		new Elements.Subpage('private/page-segments/login/change-password.html')
+	);
+	page.set_title("Fruit Register");
+	page.add_javascripts("/public/javascripts/login.js");
 
+	res.send(page.to_html());
+});
 
 router.get('/validate', (req, res) => {
 	if(web_components.force_ssl(req, res))
 		return;
 
     let page = web_components.standardPage(req.user,
-        new Elements.Center(
-            new Elements.Heading(2, "Loading...").set_attr("id", "status"),
-            Elements.SimpleBreak,
-            new Elements.Span().set_attr("id", "further")
-        )
+		new Elements.Subpage('private/page-segments/login/validate.html')
     );
     page.set_attr("onLoad", "send_validation_request()");
     page.set_title("Fruit Validate");
