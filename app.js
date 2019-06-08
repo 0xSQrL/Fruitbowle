@@ -4,6 +4,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const jwt = require('express-jwt');
+const fileUpload = require('express-fileupload');
 
 const jsonwebtoken = require('jsonwebtoken');
 const html_builder = require('./html-builder');
@@ -23,19 +24,21 @@ const app = express();
 
 html_builder.default_thumbnail = "/public/images/CoffeeSquirrel.jpg";
 html_builder.default_title = "Fruit Bowl Entertainment";
-html_builder.default_description = "Fruit Bowl Entertainment is a website that does stuff.";
+html_builder.default_description = "Fruit Bowl Entertainment is a website that does stuff. ¯\\_(ツ)_/¯";
 // view engine setup
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(fileUpload({
+	limits: {fileSize: 50 * 1024 *  1024 /* 50 MB */},
+	abortOnLimit: true,
+}));
 app.use('/public', express.static('./public'));
 app.use('/', express.static('./public/pages'));
 app.use('/favicon.ico', express.static('./public/images/favicon.ico'));
 
 app.use(function(req, res, next) {
-	req.headers['authorization'] = undefined;
     if(req.cookies['token']) {
-        req.headers['authorization'] = "BEARER " + req.cookies['token'];
         jsonwebtoken.verify(req.cookies['token'], process.env.JWT_SECRET, async function(err, token){
             if(err){
 
@@ -56,26 +59,39 @@ app.use(function(req, res, next) {
 	}
 });
 
-app.use(jwt({ secret: process.env.JWT_SECRET }).unless({ path: [
-        '/api',
-        /\/api\/users*/,
-        ///\/api\/java*/,
-        /\/public*/,
-        "/",
-        /\/login*/,
-        //'/ide'
-    ]}));
+app.use(function (req, res, next) {
+	const exceptions = [
+		'/api',
+		'/api/rebuild_dbs',
+		/^\/api\/users*/,
+		///\/api\/java*/,
+		/^\/public*/,
+		"/",
+		/^\/login*/,
+		//'/ide'
+	];
+	if(req.user)
+		return next();
+	let excepted = false;
+	exceptions.forEach(exception =>{
+		if(exception instanceof RegExp){
+			if(exception.test(req.path))
+				excepted = true;
+		}else{
+			if(exception === req.path)
+				excepted = true;
+		}
+	});
+	if(excepted)
+		return next();
 
-app.use((jwt_error, request, response, next) => {
-    if (jwt_error.name === 'UnauthorizedError') {
-		const page = web_components.standardPage(
-			null, new Elements.Center(new Elements.Heading(2, "Not logged in"))
-		);
-        return response.status(401).send(page.to_html());
-    }
-    next();
+
+	const page = web_components.standardPage(
+		null, new Elements.Center(new Elements.Heading(2, "Not logged in"))
+	);
+	return res.status(401).send(page.to_html());
+
 });
-
 
 app.use("/api", apiRouter);
 app.use("/", frontedRouter);
