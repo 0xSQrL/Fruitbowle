@@ -1,8 +1,11 @@
 const express = require('express');
 const db = require.main.require('./../database');
 const router = express.Router();
+const blogging_routes = require("./blog");
 
+const default_post_rating = 3;
 
+router.use("/", blogging_routes);
 
 
 router.generate_db = async function(){
@@ -13,7 +16,7 @@ router.generate_db = async function(){
 		 writer  bigint references users(id) NOT NULL,
 		 date_created	timestamp DEFAULT NOW(),
 		 date_published	timestamp DEFAULT NOW(),
-		 is_deleted boolean DEFAULT FALSE,
+		 is_live boolean DEFAULT FALSE,
 		 title varchar(128),
 		 content TEXT,
 		 tags VARCHAR(20)[]
@@ -37,10 +40,11 @@ router.generate_db = async function(){
 		 CREATE VIEW blog_post_rated AS 
 		 	(SELECT 
 		 		blog_post.id,
-		 		AVG(blog_impression.review) as rating
-		 	FROM blog_post JOIN blog_impression ON
+		 		COALESCE(AVG(blog_impression.review), ${default_post_rating}) as rating,
+		 		COUNT(blog_impression.review) as reviews
+		 	FROM blog_post LEFT JOIN blog_impression ON
 		 		blog_post.id=blog_impression.blog_post
-		 	WHERE blog_impression.review<>0
+		 	WHERE blog_impression.review<>0 or blog_impression.review is null
 		 	GROUP BY blog_post.id);
  	`);
 
@@ -58,15 +62,16 @@ router.generate_db = async function(){
 		 		blog_post_rated.rating
 		 	FROM blog_post JOIN blog_post_rated ON
 		 		blog_post.id=blog_post_rated.id
-		 	WHERE blog_post.date_published > NOW() AND blog_post.is_deleted='f');
+		 	WHERE blog_post.date_published < NOW() AND blog_post.is_live='t');
  	`);
+
 	console.log("blog_post_username");
 	await db.none(`
 		 CREATE VIEW blog_post_username AS 
 		 	(SELECT 
 		 		blog_post_live.id, 
 		 		blog_post_live.writer, 
-		 		users.username, 
+		 		users.username as writer_name, 
 		 		blog_post_live.date_created, 
 		 		blog_post_live.date_published,
 		 		blog_post_live.title, 
@@ -76,6 +81,7 @@ router.generate_db = async function(){
 		 	FROM blog_post_live JOIN users 
 		 		ON users.id=blog_post_live.writer);
  	`);
+
 	console.log("blog_profile_relation");
 
 	await db.none(`

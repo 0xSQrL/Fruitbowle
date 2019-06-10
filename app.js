@@ -66,6 +66,8 @@ app.use(function (req, res, next) {
 		/^\/api\/users*/,
 		///\/api\/java*/,
 		/^\/public*/,
+		/^\/blog*/,
+		/^\/api\/blog*/,
 		"/",
 		/^\/login*/,
 		//'/ide'

@@ -15,8 +15,5 @@ router.get('/', async (req, res) => {
 });
 
 
-function get_stars(rating){
-
-}
 
 module.exports = router;

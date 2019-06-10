@@ -23,7 +23,7 @@ router.post('/new', async function (req, res) {
 	if(!req.body.tags)
 		req.body.tags = [];
 
-	db.none("INSERT INTO blog_post (writer, date_published, title, content, tags) VALUES ($1, $2, $3, $4, $5)", [req.user.id, req.body.publish_date, req.body.title, req.body.content, req.body.tags])
+	db.none("INSERT INTO blog_post (writer, date_published, title, content, tags, is_live) VALUES ($1, $2, $3, $4, $5, $6)", [req.user.id, req.body.publish_date, req.body.title, req.body.content, req.body.tags, req.body.is_live])
 
 	return res.status(201).json({success: true});
 });
@@ -39,7 +39,7 @@ router.put('/update', async function (req, res) {
 	if(!req.body.tags)
 		req.body.tags = [];
 
-	db.none("UPDATE blog_post SET date_published=$2, title=$3, content=$4, tags=$5 WHERE id=$6 AND writer=$1", [req.user.id, req.body.publish_date, req.body.title, req.body.content, req.body.tags, req.body.post_id])
+	db.none("UPDATE blog_post SET date_published=$2, title=$3, content=$4, tags=$5, is_live=$7 WHERE id=$6 AND writer=$1", [req.user.id, req.body.publish_date, req.body.title, req.body.content, req.body.tags, req.body.post_id, req.body.is_live])
 
 	return res.status(202).json({success: true});
 });
@@ -51,6 +51,23 @@ router.get('/read', async function (req, res) {
 	return res.status(200).json(post);
 });
 
+router.get('/get_my_posts', async function (req, res) {
+
+	if(!req.user)
+		return res.status(401).json({success: false, reason: "No account"});
+
+	const posts = db.manyOrNone(`SELECT id, date_published, title, tags, is_live, rating, reviews `);
+
+	return res.status(200).json(posts);
+});
+
+router.get('/get_author_posts', async function (req, res) {
+
+	const posts = await get_author_posts(req.user, req.query.author);
+
+	return res.status(200).json(posts);
+});
+
 router.put('/review', async function (req, res) {
 
 	set_review(req.user, req.body.post_id, req.body.review);
@@ -59,15 +76,32 @@ router.put('/review', async function (req, res) {
 });
 
 async function get_post(reader, post_id){
-	const post = await db.oneOrNone("SELECT id, writer, username, date_published, title, content, tags, rating FROM blog_post_username WHERE id=$1",
+	const post = await db.oneOrNone(`
+		SELECT 
+			id, writer, writer_name, date_published, title, content, tags, rating
+		FROM 
+			blog_post_username
+		WHERE id=$1`,
 		[post_id]);
-	post.review = get_review(reader.id, post_id);
+	if(reader)
+		post.user_rating = get_review(reader.id, post_id);
 	return post;
 }
 
-async function get_author_posts(writer_id){
-	return await db.manyOrNone("SELECT id, writer, username, date_published, title, tags, rating FROM blog_post_username WHERE writer=$1",
-		[writer_id]);
+async function get_author_posts(reader, writer_id){
+	if(reader) {
+		return await db.manyOrNone(`
+			SELECT 
+				id, writer, writer_name, date_published, title, tags, rating, impression.review as user_rating 
+			FROM 
+				blog_post_username left join 
+				(SELECT viewer, review, blog_post FROM blog_impression WHERE viewer=$2) as impression
+				ON impression.blog_post=blog_post_username.id
+				WHERE writer=$1`,
+			[writer_id, reader.id]);
+	}
+	return await db.manyOrNone("SELECT id, writer, writer_name, date_published, title, tags, rating FROM blog_post_username WHERE writer=$1",
+			[writer_id]);
 }
 
 //Get the user's opinion of an article, if none exists, set it to the default (0)

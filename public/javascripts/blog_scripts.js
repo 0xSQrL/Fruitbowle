@@ -103,3 +103,14 @@ function generate_stars(post_id, rating, parent, can_rate = true, user_rating = 
 	svg.appendChild(rendering);
 	parent.appendChild(svg);
 }
+
+function generate_post_preview(post_data, parent){
+	const housing = document.createElement("div");
+	const title = document.createElement("p");
+	title.setAttribute("class", "article_preview_title");
+	title.appendChild(document.createTextNode(post_data.title));
+	generate_stars(post_data.id, post_data.rating, title, false, post_data.user_rating);
+	const writer = document.createElement("p");
+	writer.setAttribute("class", "article_preview_writer");
+	writer.appendChild(document.createTextNode(post_data.writer_name));
+}
