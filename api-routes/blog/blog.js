@@ -56,7 +56,13 @@ router.get('/get_my_posts', async function (req, res) {
 	if(!req.user)
 		return res.status(401).json({success: false, reason: "No account"});
 
-	const posts = db.manyOrNone(`SELECT id, date_published, title, tags, is_live, rating, reviews `);
+	const posts = await db.manyOrNone(`
+	SELECT 
+		blog_post.id, date_published, date_created, title, tags, is_live, blog_post_rated.rating, blog_post_rated.reviews 
+	FROM 
+		blog_post JOIN blog_post_rated ON blog_post.id=blog_post_rated.id
+	WHERE
+		blog_post.writer=$1`, [req.user.id]);
 
 	return res.status(200).json(posts);
 });

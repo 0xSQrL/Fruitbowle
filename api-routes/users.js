@@ -4,6 +4,18 @@ const crypto = require('crypto');
 const db = require.main.require('./../database');
 const jwt = require('jsonwebtoken');
 const mail = require.main.require('./../mailer');
+const https = require.main.require('https');
+const querystring = require('querystring');
+
+const google_captcha_verify = {
+	host: "www.google.com",
+	port: 443,
+	path: "/recaptcha/api/siteverify",
+	method: 'POST',
+	headers: {
+		'Content-Type': 'application/x-www-form-urlencoded',
+	}
+};
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -53,33 +65,53 @@ router.post('/register', async function (req, res) {
     sha256.update(password+salt);
     let pwordhash = sha256.digest('hex');
 
-    if(!(username && username.length > 2))
-        return res.json({success: false, reason: "username"});
+	const query = querystring.stringify({
+		secret: process.env.CAPTCHA_SECRET,
+		response: req.body["g-recaptcha-response"]
+	});
 
-    if(!(password && password.indexOf(' ') === -1 && password.length > 2))
-        return res.json({success: false, reason: "password"});
+	google_captcha_verify.headers["Content-Length"] = query.length;
 
-    if(!(email && email.indexOf(' ') === -1 && email.length >= 5 && email.indexOf('@') < email.lastIndexOf('.') && email.indexOf('@') !== -1))
-        return res.json({success: false, reason: "email"});
+	const verifyRequest = https.request(google_captcha_verify, async (response)=>{
+		response.on('data', async (d)=>{
+			const data = JSON.parse(d.toString('utf8'));
+			if(!data.success)
+				return res.json({success: false, reason: "Failed Captcha"});
 
-    try {
-        let user = await db.one("INSERT INTO users (username, email_address, passwordhash, salt) VALUES ($1, $2, $3, $4) " +
-            "RETURNING id, username, is_validated", [username, email, pwordhash, salt]);
-        let validation = await db.one("INSERT INTO user_validation (user_id, confirmation) VALUES ($1, $2) RETURNING confirmation", [user.id, create_salt(32)]);
-        mail.send_mail(email, `${username}! Confirm your registration to FruitBowl Entertainment`,
-            `${process.env.SECURE_PORT ? 'https' : 'http'}://${process.env.DOMAIN}/login/validate?username=${encodeURI(username)}&confirmation=${validation.confirmation}`);
-        res.json({
-            success: true
-        });
-    }catch (e) {
-        if(e.constraint === "unique_email_address")
-            return res.json({
-                success: false, reason: "emailExists"
-            });
-        res.json({
-            success: false, error: e
-        });
-    }
+			if(!(username && username.length > 2))
+				return res.json({success: false, reason: "username"});
+
+			if(!(password && password.indexOf(' ') === -1 && password.length > 2))
+				return res.json({success: false, reason: "password"});
+
+			if(!(email && email.indexOf(' ') === -1 && email.length >= 5 && email.indexOf('@') < email.lastIndexOf('.') && email.indexOf('@') !== -1))
+				return res.json({success: false, reason: "email"});
+
+			try {
+				let user = await db.one("INSERT INTO users (username, email_address, passwordhash, salt) VALUES ($1, $2, $3, $4) " +
+					"RETURNING id, username, is_validated", [username, email, pwordhash, salt]);
+				let validation = await db.one("INSERT INTO user_validation (user_id, confirmation) VALUES ($1, $2) RETURNING confirmation", [user.id, create_salt(32)]);
+				mail.send_mail(email, `${username}! Confirm your registration to FruitBowl Entertainment`,
+					`${process.env.SECURE_PORT ? 'https' : 'http'}://${process.env.DOMAIN}/login/validate?username=${encodeURI(username)}&confirmation=${validation.confirmation}`);
+				res.json({
+					success: true
+				});
+			}catch (e) {
+				if(e.constraint === "unique_email_address")
+					return res.json({
+						success: false, reason: "emailExists"
+					});
+				res.json({
+					success: false, error: e
+				});
+			}
+		});
+	});
+
+	verifyRequest.write(query);
+
+	verifyRequest.end();
+
 });
 
 

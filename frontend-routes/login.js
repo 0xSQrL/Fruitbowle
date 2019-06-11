@@ -22,10 +22,11 @@ router.get('/register', (req, res) => {
 	if(web_components.force_ssl(req, res))
 		return;
     let page = web_components.standardPage(req.user,
-        new Elements.Subpage('private/page-segments/login/registration-form.html')
+        new Elements.Subpage('private/page-segments/login/registration-form.html').add_substitution("<CAPTCHA-CLIENT/>", process.env.CAPTCHA_PUBLIC)
     );
     page.set_title("Fruit Register");
-    page.add_javascripts("/public/javascripts/login.js");
+	page.add_javascripts("/public/javascripts/login.js");
+	page.add_javascripts("https://www.google.com/recaptcha/api.js");
     res.send(page.to_html());
 });
 

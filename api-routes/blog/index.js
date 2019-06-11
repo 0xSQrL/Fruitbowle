@@ -59,7 +59,8 @@ router.generate_db = async function(){
 		 		blog_post.title, 
 		 		blog_post.content, 
 		 		blog_post.tags,
-		 		blog_post_rated.rating
+		 		blog_post_rated.rating,
+		 		blog_post_rated.reviews
 		 	FROM blog_post JOIN blog_post_rated ON
 		 		blog_post.id=blog_post_rated.id
 		 	WHERE blog_post.date_published < NOW() AND blog_post.is_live='t');
