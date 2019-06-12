@@ -80,7 +80,7 @@
 
 	function postJson() {
 		let startTime = Date.now();
-		let url = `http://${window.location.hostname}:${location.port}${document.getElementById("url").value}`;
+		let url = `${window.location.protocol}//${window.location.hostname}:${location.port}${document.getElementById("url").value}`;
 		let json = document.getElementById("json").value;
 		document.getElementById("returnVal").innerHTML = "";
 		document.getElementById("serverTime").innerHTML = new Date().toUTCString();
