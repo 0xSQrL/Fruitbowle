@@ -117,7 +117,7 @@ router.post('/checkin', async function (req, res) {
         	tracker_utils.alert_user_trackers(req.user.id, req.body.latitude, req.body.longitude);
     }
     try {
-        let logAddition = await db.one('INSERT INTO TrackerLog (tracked_id, status, latitude, longitude, battery_percent) VALUES ($1, $2, $3, $4, $5) RETURNING status, latitude, longitude, time_made, battery_percent', [userLast.tracker_id, status, req.body.latitude, req.body.longitude, req.body.battery_percent]);
+        let logAddition = await db.one('INSERT INTO TrackerLog (tracked_id, status, latitude, longitude, battery_percent, activity) VALUES ($1, $2, $3, $4, $5, $6) RETURNING status, latitude, longitude, time_made, battery_percent, activity', [userLast.tracker_id, status, req.body.latitude, req.body.longitude, req.body.battery_percent, req.body.activity]);
         logAddition.success = true;
         return res.status(201).json(logAddition);
     } catch (e) {
@@ -209,7 +209,8 @@ router.generate_db = async function(){
 		longitude       DECIMAL(8,5) NOT NULL,
 		time_made       timestamp NOT NULL DEFAULT NOW(),
 		battery_percent  DECIMAL(3,2),
-		status          smallint
+		status          smallint,
+		activity        varchar(50)
 		);
 	`);
 	await db.none(`
@@ -228,7 +229,7 @@ router.generate_db = async function(){
 	`);
 	await db.none(`
 		CREATE VIEW TrackerUserLog AS
-		(SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerLog.time_made, TrackerLog.status, TrackerLog.latitude, TrackerLog.longitude, TrackerLog.battery_percent FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerLog on TrackerInfo.id=TrackerLog.tracked_id);
+		(SELECT users.id as user_id, TrackerInfo.id as tracker_id, TrackerLog.time_made, TrackerLog.status, TrackerLog.latitude, TrackerLog.longitude, TrackerLog.battery_percent, TrackerLog.activity FROM users join TrackerInfo on users.id=TrackerInfo.user_id join TrackerLog on TrackerInfo.id=TrackerLog.tracked_id);
 	`);
 	await db.none(`
 		CREATE VIEW TrackerUserSchedule AS
@@ -237,6 +238,10 @@ router.generate_db = async function(){
 	await db.none(`
 		CREATE VIEW TrackerUserViewPermissions AS
 		(SELECT TrackerObserver.id, TrackerUser.user_id as tracked_user_id, TrackerUser.username as tracked_username, TrackerUser.tracker_id as tracked_tracker_id, users.id as tracker_user_id, users.username as tracker_username, approved FROM users join TrackerObserver on users.id=TrackerObserver.tracker_id join TrackerUser on TrackerObserver.tracked_id=TrackerUser.tracker_id);
+	`);
+	await db.none(`
+		CREATE VIEW TrackerUserActivities AS
+		(SELECT DISTINCT id, activity FROM TrackerLog WHERE (activity = '') IS FALSE);
 	`);
 };
 

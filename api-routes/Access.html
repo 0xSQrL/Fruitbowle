@@ -19,7 +19,7 @@
 	}
 
 	var endpoints = [
-		new endpoint("/api/rebuild_dbs", "POST", {password: ""}),
+		new endpoint("/api/rebuild_dbs", "POST", {password: "", migrate: true}),
 		new endpoint("/api/users/login", "POST", {username: "", password: ""}),
 		new endpoint("/api/users/register", "POST", {username: "", email: "@gmail.com", password: ""}),
         new endpoint("/api/users/check?user=", "POST", {}),
@@ -39,6 +39,7 @@
 		new endpoint("/api/blog/update", "PUT", {post_id: 0, date_published: new Date(), is_live: true, title: "", content: "", tags: []}),
 		new endpoint("/api/blog/get_author_posts?author=0", "GET", {}),
 		new endpoint("/api/blog/get_my_posts", "GET", {}),
+		new endpoint("/api/blog/get_my_post?post=0", "GET", {}),
 
     ];
 

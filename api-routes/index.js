@@ -33,10 +33,12 @@ router.post('/rebuild_dbs', async (req, res) =>{
 			console.log("Deleting Tracker");
 			await tracking.delete_db();
 			console.log("Deleting Users");
-			await users.delete_db();
-
+			let tmpUsers = await users.delete_db();
+			if(!req.body.migrate) {
+				tmpUsers = undefined;
+			}
 			console.log("Building Users");
-			await users.generate_db();
+			await users.generate_db(tmpUsers);
 			console.log("Building Tracker");
 			await tracking.generate_db();
 			console.log("Building Blog");

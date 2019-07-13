@@ -151,12 +151,13 @@ function generate_user_checkin(page) {
 	page.add_contents(new Elements.Form(
 		new Elements.Table('ci', [
 				[
-					'Latitude', 'Longitude', '', 'PIN', ''
+					'Latitude', 'Longitude', '', 'Activity', 'PIN'
 				],
 					[
 					new Elements.Form.TextField('latitude').set_attr('readonly'),
 						new Elements.Form.TextField('longitude').set_attr('readonly'),
 						new Elements.Form.TextField('battery_percent', '-1').set_attr('readonly').set_attr('hidden'),
+						new Elements.Form.TextField('activity', ''),
 						PIN_Field(),
 						new Elements.Form.SubmitButton("Good").set_attr('id', 'goodCI').set_attr("onClick", "return send_check_in(0)").set_attr('disabled').set_attr('class', 'good'),
 						new Elements.Form.SubmitButton("Nervous").set_attr('id', 'nervCI').set_attr("onClick", "return send_check_in(2)").set_attr('disabled').set_attr('class', 'nervous'),

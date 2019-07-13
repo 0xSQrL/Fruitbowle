@@ -163,7 +163,7 @@ function create_salt(characterLength){
 
 
 
-router.generate_db = async function(){
+router.generate_db = async function(savings){
 	await db.none(`
 		 CREATE TABLE IF NOT EXISTS users (
 		 id				BIGSERIAL PRIMARY KEY,
@@ -192,13 +192,31 @@ router.generate_db = async function(){
 		 confirmation	varchar(32)
 		 );
  	`);
+
+	if(savings){
+		savings.users.forEach(user=>{
+			db.none(`INSERT INTO users (id, username, email_address, passwordhash, salt, is_validated, date_created, last_password_change)
+			VALUES
+			($1, $2, $3, $4, $5, $6, $7, $8)`, [user.id, user.username, user.email_address, user.passwordhash, user.salt, user.is_validated, user.date_created, user.last_password_change])
+		});
+		savings.user_validation.forEach(validation=>{
+			db.none(`INSERT INTO users ( user_id, confirmation)
+			VALUES
+			($1, $2)`, [validation.user_id, validation.confirmation])
+		});
+	}
 };
 
 router.delete_db = async function(){
+	const saving = {
+		users: await db.manyOrNone('SELECT * FROM users'),
+		user_validation: await db.manyOrNone('SELECT * FROM user_validation')
+	};
 	await db.none(`
 	DROP TABLE IF EXISTS users CASCADE;
 	DROP TABLE IF EXISTS user_validation CASCADE;
 	`);
+	return saving;
 };
 
 
