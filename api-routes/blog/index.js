@@ -24,7 +24,6 @@ router.generate_db = async function(){
  	`);
 
 	console.log("blog_impression");
-
 	await db.none(`
 		 CREATE TABLE IF NOT EXISTS blog_impression (
 		 viewer  bigint references users(id) NOT NULL,
