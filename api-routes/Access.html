@@ -40,6 +40,10 @@
 		new endpoint("/api/blog/get_author_posts?author=0", "GET", {}),
 		new endpoint("/api/blog/get_my_posts", "GET", {}),
 		new endpoint("/api/blog/get_my_post?post=0", "GET", {}),
+		new endpoint("/api/banned-food?id=", "GET", {}),
+		new endpoint("/api/banned-food?start=0&limit=20&criteria=", "GET", {}),
+		new endpoint("/api/banned-food", "POST", {name: "", reasoning: "", ranking:"", password: ""}),
+		new endpoint("/api/banned-food", "PUT", {id: 0, name: "", reasoning: "", ranking:"", password: ""}),
 
     ];
 

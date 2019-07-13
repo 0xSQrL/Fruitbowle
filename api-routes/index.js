@@ -5,6 +5,7 @@ const tracking = require('./tracking');
 const {force_ssl} = require('../frontend-routes/web_components');
 const blog = require('./blog');
 const java = require('./java_compiler');
+const banned_food = require('./banned-food');
 
 const router = express.Router();
 
@@ -32,10 +33,13 @@ router.post('/rebuild_dbs', async (req, res) =>{
 			await blog.delete_db();
 			console.log("Deleting Tracker");
 			await tracking.delete_db();
+			console.log("Deleting Banned Food");
+			let tmpBanned = await banned_food.delete_db();
 			console.log("Deleting Users");
 			let tmpUsers = await users.delete_db();
 			if(!req.body.migrate) {
 				tmpUsers = undefined;
+				tmpBanned = undefined;
 			}
 			console.log("Building Users");
 			await users.generate_db(tmpUsers);
@@ -43,6 +47,8 @@ router.post('/rebuild_dbs', async (req, res) =>{
 			await tracking.generate_db();
 			console.log("Building Blog");
 			await blog.generate_db();
+			console.log("Building Banned Food");
+			await banned_food.generate_db(tmpBanned);
 			return res.status(200).json({success: true, error: "You rebuilt everything, you monster"});
 		}
 	}
@@ -54,6 +60,8 @@ router.use('/users', users);
 router.use('/tracker', tracking);
 
 router.use('/blog', blog);
+
+router.use('/banned-food', banned_food);
 
 
 module.exports = router;

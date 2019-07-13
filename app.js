@@ -68,6 +68,7 @@ app.use(function (req, res, next) {
 		/^\/public*/,
 		/^\/blog*/,
 		/^\/api\/blog*/,
+		/^\/api\/banned-food*/,
 		"/",
 		/^\/login*/,
 		//'/ide'
