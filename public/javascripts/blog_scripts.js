@@ -113,4 +113,5 @@ function generate_post_preview(post_data, parent){
 	const writer = document.createElement("p");
 	writer.setAttribute("class", "article_preview_writer");
 	writer.appendChild(document.createTextNode(post_data.writer_name));
+
 }

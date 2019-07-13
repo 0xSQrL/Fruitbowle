@@ -56,15 +56,17 @@ router.get('/get_my_posts', async function (req, res) {
 	if(!req.user)
 		return res.status(401).json({success: false, reason: "No account"});
 
-	const posts = await db.manyOrNone(`
-	SELECT 
-		blog_post.id, date_published, date_created, title, tags, is_live, blog_post_rated.rating, blog_post_rated.reviews 
-	FROM 
-		blog_post JOIN blog_post_rated ON blog_post.id=blog_post_rated.id
-	WHERE
-		blog_post.writer=$1`, [req.user.id]);
 
-	return res.status(200).json(posts);
+	return res.status(200).json(get_user_posts(req.user));
+});
+
+router.get('/get_my_post', async function (req, res) {
+
+	if(!req.user)
+		return res.status(401).json({success: false, reason: "No account"});
+
+
+	return res.status(200).json(get_user_post(req.user, req.query.post));
 });
 
 router.get('/get_author_posts', async function (req, res) {
@@ -110,6 +112,31 @@ async function get_author_posts(reader, writer_id){
 			[writer_id]);
 }
 
+async function get_user_posts(user){
+
+	return await db.manyOrNone(`
+	SELECT 
+		blog_post.id, date_published, date_created, title, tags, is_live, blog_post_rated.rating, blog_post_rated.reviews 
+	FROM 
+		blog_post JOIN blog_post_rated ON blog_post.id=blog_post_rated.id
+	WHERE
+		blog_post.writer=$1`, [user.id]);
+
+}
+
+
+async function get_user_post(user, post_id){
+
+	return await db.one(`
+	SELECT 
+		blog_post.id, date_published, date_created, title, content, tags, is_live, blog_post_rated.rating, blog_post_rated.reviews 
+	FROM 
+		blog_post JOIN blog_post_rated ON blog_post.id=blog_post_rated.id
+	WHERE
+		blog_post.writer=$1 AND blog_post.id=$2`, [user.id, post_id]);
+
+}
+
 //Get the user's opinion of an article, if none exists, set it to the default (0)
 async function get_review(reader_id, post_id){
 	let impression = await db.oneOrNone("SELECT review FROM blog_impression WHERE viewer=$1 AND blog_post=$2", [reader_id, post_id]);
@@ -131,8 +158,12 @@ async function set_review(reader_id, post_id, review = 0){
 
 
 module.exports = router;
+
 module.exports.get_post = get_post;
 module.exports.get_author_posts = get_author_posts;
+
+module.exports.get_user_post = get_user_post;
+module.exports.get_user_posts = get_user_posts;
 
 /**
 
