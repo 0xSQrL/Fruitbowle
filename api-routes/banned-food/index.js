@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require.main.require('./../database');
 const router = express.Router();
-const {force_ssl} = require('../../frontend-routes/web_components');
+const {force_ssl, user_has_permission} = require('../../frontend-routes/web_components');
 
 
 router.post("/", async (req, res) =>{
@@ -10,15 +10,15 @@ router.post("/", async (req, res) =>{
 		return;
 	if (!req.body)
 		return res.status(401).json({success: false, error: "No body"});
-	if (!req.body.password)
-		return res.status(401).json({success: false, error: "No Password"});
-	if (req.body.password === process.env.EMAIL_PASSWORD) {
+	if (user_has_permission(user, req.body.password, 2)) {
 		db.none(`INSERT INTO banned_food (ranking, name, reasoning)
 			VALUES
 			($1, $2, $3)`, [
 			req.body.ranking,
 			req.body.name,
 			req.body.reasoning]);
+	}else{
+		return res.status(401).json({success: false, error: "Invalid permissions"});
 	}
 
 	return res.status(200).json({success: true});
@@ -51,7 +51,7 @@ router.put("/", async (req, res) =>{
 		return res.status(401).json({success: false, error: "No body"});
 	if (!req.body.password)
 		return res.status(401).json({success: false, error: "No Password"});
-	if (req.body.password === process.env.EMAIL_PASSWORD) {
+	if (user_has_permission(user, req.body.password, 2)) {
 		db.none(`UPDATE banned_food SET ranking=$1, name=$2, reasoning=$3, last_updated=$4
 			WHERE id=$5`, [
 			req.body.ranking,

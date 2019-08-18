@@ -6,6 +6,7 @@ const Elements = html_builder.Elements;
 const login_fe = require('./login');
 const tracking_fe = require('./tracking');
 const blog_fe = require('./blog');
+const foods_list = require('./foods-list');
 
 
 const router = express.Router();
@@ -15,6 +16,8 @@ router.use('/login', login_fe);
 router.use('/tracker', tracking_fe);
 
 router.use('/blog', blog_fe);
+
+router.use('/food', foods_list);
 
 router.get('/', (req, res) => {
 try {

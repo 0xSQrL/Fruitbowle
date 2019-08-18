@@ -2,7 +2,7 @@ const express = require('express');
 const filesystem = require('fs');
 const users = require('./users');
 const tracking = require('./tracking');
-const {force_ssl} = require('../frontend-routes/web_components');
+const {force_ssl, user_has_permission} = require('../frontend-routes/web_components');
 const blog = require('./blog');
 const java = require('./java_compiler');
 const banned_food = require('./banned-food');
@@ -26,9 +26,7 @@ router.post('/rebuild_dbs', async (req, res) =>{
 			return;
 		if (!req.body)
 			return res.status(401).json({success: false, error: "No body"});
-		if (!req.body.password)
-			return res.status(401).json({success: false, error: "No Password"});
-		if (req.body.password === process.env.EMAIL_PASSWORD) {
+		if (user_has_permission(req.user, req.body.password, 2)) {
 			console.log("Deleting Blog");
 			await blog.delete_db();
 			console.log("Deleting Tracker");
@@ -50,6 +48,8 @@ router.post('/rebuild_dbs', async (req, res) =>{
 			console.log("Building Banned Food");
 			await banned_food.generate_db(tmpBanned);
 			return res.status(200).json({success: true, error: "You rebuilt everything, you monster"});
+		}else{
+			return res.status(401).json({success: false, error: "Invalid permissions"});
 		}
 	}
 	return res.status(401).json({success: false, error: "IDK Something went wrong"});

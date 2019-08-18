@@ -21,6 +21,7 @@
 	var endpoints = [
 		new endpoint("/api/rebuild_dbs", "POST", {password: "", migrate: true}),
 		new endpoint("/api/users/login", "POST", {username: "", password: ""}),
+		new endpoint("/api/users/set-permissions", "PUT", {id: "", password: "", permission_level:0}),
 		new endpoint("/api/users/register", "POST", {username: "", email: "@gmail.com", password: ""}),
         new endpoint("/api/users/check?user=", "POST", {}),
         new endpoint("/api/tracker/register", "POST", {pin: "0000"}),

@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const db = require.main.require('./../database');
 const jwt = require('jsonwebtoken');
 const mail = require.main.require('./../mailer');
+const {force_ssl, user_has_permission} = require('../frontend-routes/web_components');
 const https = require.main.require('https');
 const querystring = require('querystring');
 
@@ -19,7 +20,7 @@ const google_captcha_verify = {
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-    res.json(req.user);
+    return res.status(200).json(req.user);
 });
 
 router.post('/login', async function (req, res) {
@@ -49,6 +50,19 @@ router.post('/login', async function (req, res) {
 
 router.put('/change-password', async function (req, res) {
 	//Validate Change Password
+});
+
+
+router.put('/set-permissions', async function (req, res) {
+
+	if (force_ssl(req, res))
+		return;
+	if(user_has_permission(req.user, req.body.password, req.body.permission_level + 1)){
+		db.none(`UPDATE users SET permission_level=$1 WHERE id=$2`, [req.body.permission_level, req.body.id])
+		return res.status(200).json({success: true})
+	}else{
+		return res.status(500).json({success: false, reason: "You do not have permission to perform this action."})
+	}
 });
 
 router.post('/request-change', async function (req, res) {
@@ -166,13 +180,14 @@ function create_salt(characterLength){
 router.generate_db = async function(savings){
 	await db.none(`
 		 CREATE TABLE IF NOT EXISTS users (
-		 id				BIGSERIAL PRIMARY KEY,
-		 username		varchar(32),
-		 email_address	varchar(255),
-		 passwordhash	varchar(255),
-		 salt			varchar(16),
-		 is_validated	boolean DEFAULT FALSE,
-		 date_created	timestamp DEFAULT NOW(),
+		 id						BIGSERIAL PRIMARY KEY,
+		 username				varchar(32),
+		 email_address			varchar(255),
+		 passwordhash			varchar(255),
+		 salt					varchar(16),
+		 permission_level		smallint DEFAULT 0,
+		 is_validated			boolean DEFAULT FALSE,
+		 date_created			timestamp DEFAULT NOW(),
 		 last_password_change	timestamp DEFAULT NOW()
 		 );
 		
@@ -195,9 +210,9 @@ router.generate_db = async function(savings){
 
 	if(savings){
 		savings.users.forEach(user=>{
-			db.none(`INSERT INTO users (id, username, email_address, passwordhash, salt, is_validated, date_created, last_password_change)
+			db.none(`INSERT INTO users (id, username, email_address, passwordhash, salt, is_validated, date_created, last_password_change, permission_level)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8)`, [user.id, user.username, user.email_address, user.passwordhash, user.salt, user.is_validated, user.date_created, user.last_password_change])
+			($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [user.id, user.username, user.email_address, user.passwordhash, user.salt, user.is_validated, user.date_created, user.last_password_change, user.permission_level])
 		});
 		savings.user_validation.forEach(validation=>{
 			db.none(`INSERT INTO users ( user_id, confirmation)

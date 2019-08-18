@@ -45,9 +45,10 @@ app.use(function(req, res, next) {
             }else{
 
                 let tmpUser = jsonwebtoken.decode(req.cookies['token']);
-                let validation = await db.oneOrNone("SELECT id, username, is_validated, last_password_change FROM users WHERE id=$1", [tmpUser.id]);
+                let validation = await db.oneOrNone("SELECT id, username, is_validated, last_password_change, permission_level FROM users WHERE id=$1", [tmpUser.id]);
                 if(validation && validation.is_validated && new Date(tmpUser.last_password_change).getTime() === validation.last_password_change.getTime()) {
 					req.user = tmpUser;
+					req.user.permission_level = validation.permission_level;
 				}
 
 			}
@@ -89,9 +90,8 @@ app.use(function (req, res, next) {
 		return next();
 
 
-	const page = web_components.standardPage(
-		null, new Elements.Center(new Elements.Heading(2, "Not logged in"))
-	);
+	const page = web_components.not_logged_in_page();
+
 	return res.status(401).send(page.to_html());
 
 });

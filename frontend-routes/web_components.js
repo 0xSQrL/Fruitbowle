@@ -46,6 +46,18 @@ module.exports.standardPage = function(user, ...content){
     return page;
 };
 
+module.exports.not_logged_in_page = function(){
+	return standardPage(
+		null, new Elements.Center(new Elements.Heading(2, "Not logged in"))
+	);
+};
+
+module.exports.access_denied_page = function(){
+	return standardPage(
+		null, new Elements.Center(new Elements.Heading(2, "Access Denied"))
+	);
+};
+
 
 module.exports.force_ssl = function(req, res){
 
@@ -54,5 +66,11 @@ module.exports.force_ssl = function(req, res){
 		return true;
 	}
 	return false;
+};
+
+module.exports.user_has_permission = function (user, password, min_permissions){
+	if(password && password === process.env.EMAIL_PASSWORD)
+		return true;
+	return (user && user.permission_level >= min_permissions);
 
 };
