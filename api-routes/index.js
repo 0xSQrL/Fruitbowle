@@ -4,6 +4,7 @@ const users = require('./users');
 const tracking = require('./tracking');
 const {force_ssl} = require('../frontend-routes/web_components');
 const blog = require('./blog');
+const security = require('./security');
 const java = require('./java_compiler');
 
 const router = express.Router();
@@ -54,6 +55,8 @@ router.use('/users', users);
 router.use('/tracker', tracking);
 
 router.use('/blog', blog);
+
+router.use('/security', security);
 
 
 module.exports = router;

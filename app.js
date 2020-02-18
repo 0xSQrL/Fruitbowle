@@ -64,6 +64,8 @@ app.use(function (req, res, next) {
 		'/api',
 		'/api/rebuild_dbs',
 		/^\/api\/users*/,
+		/^\/api\/security\/uploadImage/,
+		/^\/api\/security\/latest/,
 		///\/api\/java*/,
 		/^\/public*/,
 		/^\/blog*/,

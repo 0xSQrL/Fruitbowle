@@ -17,6 +17,7 @@
     "morgan": "~1.9.0",
     "nodemailer": "^4.6.8",
     "pg-promise": "^8.5.2",
+    "process": "^0.11.10",
     "pug": "^2.0.3"
   }
 }
