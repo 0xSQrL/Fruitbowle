@@ -66,6 +66,7 @@ app.use(function (req, res, next) {
 		/^\/api\/users*/,
 		/^\/api\/security\/uploadImage/,
 		/^\/api\/security\/latest/,
+		/^\/api\/security\/framerate/,
 		///\/api\/java*/,
 		/^\/public*/,
 		/^\/blog*/,

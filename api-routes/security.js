@@ -3,9 +3,55 @@ const fs = require('fs');
 const router = express.Router();
 const path = require('path');
 const process = require('process');
-console.log("HERER");
 
 const base_file = `public/images/security`;
+
+const FrameRateCounter = function (frame_defintion, timeout){
+
+	const last_frames = {};
+
+	function _countFrame(cameraId){
+
+		const now = new Date().getTime();
+		
+		if(!(cameraId in last_frames)){
+			last_frames[cameraId] = []
+		}
+		const last_frame = last_frames[cameraId];
+
+		if(last_frame.length > 0 && (now - last_frame[last_frame.length - 1]) > timeout){
+			last_frame.length = 0;
+		}
+
+		last_frame.push(now);
+		if(last_frame.length > frame_defintion)
+			last_frame.shift();
+	}
+	
+	function _getFrameRate(cameraId){
+		
+		if(!(cameraId in last_frames)){
+			return 0;
+		}
+	
+		const last_frame = last_frames[cameraId];
+	
+		if(last_frame.length <= 1 || (new Date().getTime() - last_frame[last_frame.length - 1]) > timeout)
+			return 0;
+		
+		let frameCount = 0;
+		for(let i = 0; i < last_frame.length - 1; i++){
+			frameCount += last_frame[i + 1] - last_frame[i];
+		}
+	
+		return (last_frame.length - 1) * 1000 / frameCount;
+	}
+
+	return {
+		getFrameRate: _getFrameRate,
+		countFrame: _countFrame,
+	}
+}(6, 1000);
 
 router.post('/uploadImage', async function (req, res) {
 	let cameraId = req.query.camera;
@@ -21,6 +67,7 @@ router.post('/uploadImage', async function (req, res) {
 		}
 
 		file.mv(`${base_file}/${cameraId}/latest/${new Date().getTime()}${extension}`);
+		FrameRateCounter.countFrame(cameraId);
 		return res.json({
 			success:true
 		});
@@ -44,6 +91,7 @@ function limitFiles(cameraId) {
 	});
 }
 
+
 function createFileTree(cameraId){
 	if(!fs.existsSync(base_file))
 		fs.mkdirSync(base_file);
@@ -65,6 +113,16 @@ router.get('/latest', async function (req, res) {
 	res.json({
 		success:false
 	});
+});
+
+
+router.get('/framerate', async function (req, res) {
+	let cameraId = req.query.camera;
+
+	res.json({
+		frame_rate: FrameRateCounter.getFrameRate(cameraId)
+	});
+	
 });
 
 module.exports = router;
